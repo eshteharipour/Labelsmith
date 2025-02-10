@@ -37,6 +37,9 @@
         <div class="truncate" :title="image.name">{{ image.name }}</div>
         <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
         <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
+        <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
+        <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
+        <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
         <button @click="toggleSelect(image)" :class="{ 'bg-green-500': isSelected(image.basename) }"
           class="mt-2 w-full px-4 py-2 rounded">
           {{ isSelected(image.basename) ? 'Deselect' : 'Select' }}
@@ -52,6 +55,9 @@
           <div class="font-bold">{{ image.name }}</div>
           <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
           <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
+          <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
+          <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
+          <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
         </div>
         <button @click="toggleSelect(image)" :class="{ 'bg-green-500': isSelected(image.basename) }"
           class="px-4 py-2 rounded">
@@ -76,6 +82,8 @@
 
 <script>
 import axios from 'axios'
+import { version } from 'vue';
+console.log(`Vue version: ${version}`);
 
 export default {
   data() {
@@ -92,7 +100,7 @@ export default {
   computed: {
     displayImages() {
       return this.showSelected ?
-      // this.images.filter(img => this.selectedImages.includes(img.basename)) :
+        // this.images.filter(img => this.selectedImages.includes(img.basename)) :
         this.images :
         this.images
     }
@@ -100,6 +108,8 @@ export default {
 
   methods: {
     async loadImages() {
+      this.images = [] // Fixes duplicate products on changing page 
+      // TODO: but spamming next/prev page makes vue not update anymore
       try {
         const response = await axios.get(`/api/images?page=${this.currentPage}`)
         this.images = response.data.images

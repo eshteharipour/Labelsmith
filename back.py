@@ -1,14 +1,13 @@
 import json
 import os
 
-import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from dataset.settings import LCSCIseeCLip
+from prod2vec.dataset.isee_cleaner import read_dataset
 
 app = FastAPI()
 
@@ -22,25 +21,22 @@ app.add_middleware(
 )
 
 # Constants
-DATA_FILE = LCSCIseeCLip.dataset_path
-STATE_FILE = "artifacts/state.json"
-PAGE_SIZE = 100
+PAGE_SIZE = 1000
 
 # Load dataset
-if not os.path.exists(DATA_FILE):
-    raise FileNotFoundError(f"Dataset file '{DATA_FILE}' not found.")
+print("Lading dataframe...")
+fltr_df, orig_df, state_file, default_image = read_dataset()
+print("Finished loading dataframe.")
 
-df = pd.read_csv(DATA_FILE, sep="\t", dtype=object, keep_default_na=False)
-df.index.name = "id"
 
 # Load or initialize state
-if os.path.exists(STATE_FILE):
-    with open(STATE_FILE, "r", encoding="utf-8") as f:
+if os.path.exists(state_file):
+    with open(state_file, "r", encoding="utf-8") as f:
         state = json.load(f)
 else:
     state = {"selected_images": [], "last_page": 0}
-    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(state_file), exist_ok=True)
+    with open(state_file, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
 
 
@@ -59,11 +55,11 @@ async def get_images(page: int = 0):
     start_idx = page * PAGE_SIZE
     end_idx = start_idx + PAGE_SIZE
 
-    page_data = df.iloc[start_idx:end_idx].reset_index().to_dict("records")
-    total_pages = len(df) // PAGE_SIZE + (1 if len(df) % PAGE_SIZE > 0 else 0)
+    page_data = fltr_df.iloc[start_idx:end_idx].reset_index().to_dict("records")
+    total_pages = len(fltr_df) // PAGE_SIZE + (1 if len(fltr_df) % PAGE_SIZE > 0 else 0)
 
     state["last_page"] = page
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
+    with open(state_file, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
 
     return {
@@ -76,7 +72,9 @@ async def get_images(page: int = 0):
 
 @app.get("/api/images/selected")
 async def get_selected_images():
-    selected_df = df[df["basename"].isin(state["selected_images"])]
+    selected_df = orig_df[
+        orig_df["basename"].isin(state["selected_images"])
+    ].drop_duplicates("basename")
     return {"images": selected_df.reset_index().to_dict("records")}
 
 
@@ -87,7 +85,7 @@ async def update_image(update: ImageUpdate):
     elif not update.selected and update.basename in state["selected_images"]:
         state["selected_images"].remove(update.basename)
 
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
+    with open(state_file, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
 
     return {"success": True}
@@ -95,14 +93,23 @@ async def update_image(update: ImageUpdate):
 
 @app.get("/api/images/file/{image_id}")
 async def get_image(image_id: int):
+    if image_id < 0 or image_id >= len(fltr_df):
+        raise HTTPException(status_code=400, detail="Image not found")
+
     try:
-        if image_id < 0 or image_id >= len(df):
-            raise HTTPException(status_code=404, detail="Image not found")
+        image_path = fltr_df.loc[image_id, "path"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-        image_path = df.loc[image_id, "path"]
-        if not os.path.exists(image_path):
-            raise HTTPException(status_code=404, detail="Image file not found")
+    if not image_path:
+        return FileResponse(default_image)
 
+    if not os.path.exists(image_path):
+        raise HTTPException(
+            status_code=404, detail=f"Image file not found {image_path}"
+        )
+
+    try:
         return FileResponse(image_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

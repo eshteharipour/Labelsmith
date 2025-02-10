@@ -11,6 +11,7 @@ uvicorn backend.main:app --reload --log-level debug
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 uvicorn cleaner.back:app --reload
+uvicorn cleaner.back:app --reload --workers 8
 ```
 
 Prompt:
