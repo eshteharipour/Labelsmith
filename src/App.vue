@@ -9,6 +9,12 @@
         <button :class="buttonClass" @click="saveData">
           {{ buttonText }}
         </button>
+        <button @click="imageMode = true" :class="{ 'bg-red-500': imageMode === true }" class="px-4 py-2 rounded">
+          Image Mode
+        </button>
+        <button @click="imageMode = false" :class="{ 'bg-red-500': imageMode === false }" class="px-4 py-2 rounded">
+          Text Mode
+        </button>
         <button @click="viewMode = 'grid'" :class="{ 'bg-blue-500': viewMode === 'grid' }" class="px-4 py-2 rounded">
           Grid View
         </button>
@@ -36,13 +42,17 @@
     <!-- Grid View -->
     <div v-if="viewMode === 'grid'" class="grid grid-cols-4 gap-4">
       <div v-for="image in images" :key="image.path" class="border rounded p-4">
-        <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
+        <div v-if="imageMode === true">
+          <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
+        </div>
         <div class="truncate" :title="image.name">{{ image.name }}</div>
-        <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
-        <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
-        <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
-        <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
-        <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+        <div v-if="imageMode === true">
+          <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
+          <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
+          <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
+          <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
+          <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+        </div>
         <div class="dropdown">
           <select v-model="images2selected[image.basename]"
             @change="changeStatus(image, images2selected[image.basename])" class="dropdown-select" :class="{
@@ -63,14 +73,18 @@
     <!-- Row View -->
     <div v-else class="space-y-4">
       <div v-for="image in images" :key="image.path" class="flex items-center border rounded p-4">
-        <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-32 object-cover" />
+        <div v-if="imageMode === true">
+          <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-32 object-cover" />
+        </div>
         <div class="flex-1 px-4">
           <div class="font-bold">{{ image.name }}</div>
-          <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
-          <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
-          <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
-          <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
-          <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+          <div v-if="imageMode === true">
+            <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
+            <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
+            <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
+            <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
+            <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+          </div>
           <select v-model="images2selected[image.basename]"
             @change="changeStatus(image, images2selected[image.basename])" class="dropdown-select" :class="{
               'dropdown-select': true,
@@ -107,6 +121,7 @@ console.log(`Vue version: ${version}`);
 export default {
   data() {
     return {
+      imageMode: true,
       images: [],
       statuses: [],
       selectedImages: {},
@@ -116,9 +131,9 @@ export default {
       viewMode: 'grid',
       showSelected: false,
       buttonText: "Save",
-      buttonClass: "bg-blue-500 text-white px-4 py-2 rounded",
+      buttonClass: "bg-green-500 text-white px-4 py-2 rounded",
       originalText: "Save",
-      originalClass: "bg-blue-500 text-white px-4 py-2 rounded",
+      originalClass: "bg-green-500 text-white px-4 py-2 rounded",
     }
   },
 
