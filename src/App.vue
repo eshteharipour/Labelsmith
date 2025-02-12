@@ -6,6 +6,9 @@
     <!-- Controls -->
     <div class="flex justify-between mb-8">
       <div class="space-x-4">
+        <button :class="buttonClass" @click="saveData">
+          {{ buttonText }}
+        </button>
         <button @click="viewMode = 'grid'" :class="{ 'bg-blue-500': viewMode === 'grid' }" class="px-4 py-2 rounded">
           Grid View
         </button>
@@ -32,7 +35,7 @@
 
     <!-- Grid View -->
     <div v-if="viewMode === 'grid'" class="grid grid-cols-4 gap-4">
-      <div v-for="image in displayImages" :key="image.path" class="border rounded p-4">
+      <div v-for="image in images" :key="image.path" class="border rounded p-4">
         <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
         <div class="truncate" :title="image.name">{{ image.name }}</div>
         <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
@@ -40,16 +43,26 @@
         <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
         <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
         <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
-        <button @click="toggleSelect(image)" :class="{ 'bg-green-500': isSelected(image.basename) }"
-          class="mt-2 w-full px-4 py-2 rounded">
-          {{ isSelected(image.basename) ? 'Deselect' : 'Select' }}
-        </button>
+        <div class="dropdown">
+          <select v-model="images2selected[image.basename]"
+            @change="changeStatus(image, images2selected[image.basename])" class="dropdown-select" :class="{
+              'dropdown-select': true,
+              'default-select': images2selected[image.basename] === statuses[0],
+              'selected-select': images2selected[image.basename] !== statuses[0]
+            }">
+            <option v-for="item in statuses" :key="item" :value="item">
+              <!-- :class="{ 'base-option': item === statuses[0], 'selected-option': item !== statuses[0] }"> -->
+              <!-- :selected="images2selected[image.basename] === item"> -->
+              {{ item }}
+            </option>
+          </select>
+        </div>
       </div>
     </div>
 
     <!-- Row View -->
     <div v-else class="space-y-4">
-      <div v-for="image in displayImages" :key="image.path" class="flex items-center border rounded p-4">
+      <div v-for="image in images" :key="image.path" class="flex items-center border rounded p-4">
         <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-32 object-cover" />
         <div class="flex-1 px-4">
           <div class="font-bold">{{ image.name }}</div>
@@ -58,11 +71,17 @@
           <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
           <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
           <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+          <select v-model="images2selected[image.basename]"
+            @change="changeStatus(image, images2selected[image.basename])" class="dropdown-select" :class="{
+              'dropdown-select': true,
+              'default-select': images2selected[image.basename] === statuses[0],
+              'selected-select': images2selected[image.basename] !== statuses[0]
+            }">
+            <option v-for="item in statuses" :key="item" :value="item">
+              {{ item }}
+            </option>
+          </select>
         </div>
-        <button @click="toggleSelect(image)" :class="{ 'bg-green-500': isSelected(image.basename) }"
-          class="px-4 py-2 rounded">
-          {{ isSelected(image.basename) ? 'Deselect' : 'Select' }}
-        </button>
       </div>
     </div>
 
@@ -89,11 +108,17 @@ export default {
   data() {
     return {
       images: [],
-      selectedImages: [],
+      statuses: [],
+      selectedImages: {},
+      images2selected: {},
       currentPage: 0,
       totalPages: 0,
       viewMode: 'grid',
-      showSelected: false
+      showSelected: false,
+      buttonText: "Save",
+      buttonClass: "bg-blue-500 text-white px-4 py-2 rounded",
+      originalText: "Save",
+      originalClass: "bg-blue-500 text-white px-4 py-2 rounded",
     }
   },
 
@@ -112,34 +137,42 @@ export default {
       // TODO: but spamming next/prev page makes vue not update anymore
       try {
         const response = await axios.get(`/api/images?page=${this.currentPage}`)
+        this.selectedImages = response.data.selected_images
+        this.images2selected = this.isSelected(response.data.images, this.selectedImages)
+
         this.images = response.data.images
         this.totalPages = response.data.total_pages
-        this.selectedImages = response.data.selected_images
+        const statuses = [""]
+        statuses.push.apply(statuses, response.data.statuses)
+        this.statuses = statuses
       } catch (error) {
         console.error('Error loading images:', error)
       }
     },
 
-    async toggleSelect(image) {
+    async changeStatus(image, status) {
       try {
-        const selected = !this.isSelected(image.basename)
         await axios.post('/api/images/update', {
           basename: image.basename,
-          selected
+          status
         })
-        if (selected) {
-          this.selectedImages.push(image.basename)
-        } else {
-          this.selectedImages = this.selectedImages.filter(bn => bn !== image.basename)
+        if (status) {
+          this.selectedImages[image.basename] = status
+        } else if (image.basename in this.selectedImages) {
+          delete this.selectedImages[image.basename]
         }
       } catch (error) {
         console.error('Error updating image:', error)
       }
     },
 
-    isSelected(str) {
-      return this.selectedImages.includes(str)
+    isSelected(images, selectedImages) {
+      return images.reduce((acc, img) => {
+        acc[img.basename] = selectedImages[img.basename] ?? "";
+        return acc;
+      }, {})
     },
+
 
     async prevPage() {
       if (this.currentPage > 0) {
@@ -162,7 +195,44 @@ export default {
       } catch (error) {
         console.error('Error loading last page:', error)
       }
-    }
+    },
+
+    async saveData() {
+      this.buttonText = "Saving...";
+      this.buttonClass = "bg-yellow-500 text-white px-4 py-2 rounded";
+
+      try {
+        const response = await axios.post('/api/save_page', {
+          page: this.currentPage
+        })
+
+        if (response.data.success) {
+          this.buttonText = "Saved!";
+          this.buttonClass = "bg-green-500 text-white px-4 py-2 rounded";
+
+          setTimeout(() => {
+            this.buttonText = this.originalText;
+            this.buttonClass = this.originalClass;
+          }, 2000);
+        } else {
+          this.buttonText = "Failed!";
+          this.buttonClass = "bg-red-500 text-white px-4 py-2 rounded";
+
+          setTimeout(() => {
+            this.buttonText = this.originalText;
+            this.buttonClass = this.originalClass;
+          }, 2000);
+        }
+      } catch (error) {
+        this.buttonText = "Error!";
+        this.buttonClass = "bg-red-500 text-white px-4 py-2 rounded";
+
+        setTimeout(() => {
+          this.buttonText = this.originalText;
+          this.buttonClass = this.originalClass;
+        }, 2000);
+      }
+    },
   },
 
   async mounted() {
@@ -175,12 +245,47 @@ export default {
       async handler(val) {
         if (val) {
           const response = await axios.get('/api/images/selected')
+          this.images2selected = this.isSelected(response.data.images, this.selectedImages)
           this.images = response.data.images
         } else {
           await this.loadImages()
         }
       }
-    }
+    },
+    // images2selected: {
+    //   deep: true,
+    //   handler(newVal) {
+    //     console.log('images2selected changed:', newVal);
+    //   }
+    // },
   }
 }
 </script>
+
+<style>
+button {
+  transition: background-color 0.3s ease-in-out;
+}
+</style>
+
+<style scoped>
+.dropdown {
+  margin: 1rem 0;
+}
+
+.dropdown-select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+}
+
+.default-select {
+  background-color: white;
+}
+
+.selected-select {
+  background-color: #4CAF50;
+  color: white;
+}
+</style>

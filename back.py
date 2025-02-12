@@ -15,17 +15,18 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 # Constants
-PAGE_SIZE = 1000
+PAGE_SIZE = 100
+SAVE_LAST_PAGE_ON_PAGE_CHANGE = False
 
 # Load dataset
 print("Lading dataframe...")
-fltr_df, orig_df, state_file, default_image = read_dataset()
+fltr_df, orig_df, state_file, default_image, statuses = read_dataset()
 print("Finished loading dataframe.")
 
 
@@ -34,7 +35,7 @@ if os.path.exists(state_file):
     with open(state_file, "r", encoding="utf-8") as f:
         state = json.load(f)
 else:
-    state = {"selected_images": [], "last_page": 0}
+    state = {"selected_images": {}, "last_page": 0}
     os.makedirs(os.path.dirname(state_file), exist_ok=True)
     with open(state_file, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
@@ -42,12 +43,21 @@ else:
 
 class ImageUpdate(BaseModel):
     basename: str
-    selected: bool
+    status: str
 
 
 @app.get("/api/last")
 async def get_last():
     return {"last_page": state["last_page"]}
+
+
+@app.post("/api/save_page")
+async def save_page(page: int = 0):
+    state["last_page"] = page
+    with open(state_file, "w", encoding="utf-8") as f:
+        json.dump(state, f, indent=2, ensure_ascii=False)
+
+    return {"success": True}
 
 
 @app.get("/api/images")
@@ -58,15 +68,16 @@ async def get_images(page: int = 0):
     page_data = fltr_df.iloc[start_idx:end_idx].reset_index().to_dict("records")
     total_pages = len(fltr_df) // PAGE_SIZE + (1 if len(fltr_df) % PAGE_SIZE > 0 else 0)
 
-    state["last_page"] = page
-    with open(state_file, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2, ensure_ascii=False)
+    # Save last_page on changing page
+    if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
+        await save_page(page)
 
     return {
         "images": page_data,
         "total_pages": total_pages,
         "current_page": page,
         "selected_images": state["selected_images"],
+        "statuses": statuses,
     }
 
 
@@ -80,10 +91,10 @@ async def get_selected_images():
 
 @app.post("/api/images/update")
 async def update_image(update: ImageUpdate):
-    if update.selected and update.basename not in state["selected_images"]:
-        state["selected_images"].append(update.basename)
-    elif not update.selected and update.basename in state["selected_images"]:
-        state["selected_images"].remove(update.basename)
+    if update.status and update.basename:
+        state["selected_images"].update({update.basename: update.status})
+    elif not update.status and update.basename in state["selected_images"]:
+        state["selected_images"].pop(update.basename)
 
     with open(state_file, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
@@ -92,10 +103,7 @@ async def update_image(update: ImageUpdate):
 
 
 @app.get("/api/images/file/{image_id}")
-async def get_image(image_id: int):
-    if image_id < 0 or image_id >= len(fltr_df):
-        raise HTTPException(status_code=400, detail="Image not found")
-
+async def get_image(image_id: str):
     try:
         image_path = fltr_df.loc[image_id, "path"]
     except Exception as e:
