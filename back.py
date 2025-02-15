@@ -1,13 +1,13 @@
 import json
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from prod2vec.dataset.isee_cleaner import read_dataset
+from prod2vec.dataset.isee_cleaner import read_dataset, save_json, sync_state
 
 app = FastAPI()
 
@@ -23,27 +23,25 @@ app.add_middleware(
 # Constants
 PAGE_SIZE = 100
 SAVE_LAST_PAGE_ON_PAGE_CHANGE = False
+groups_df = None
+groups_idx2cluster = None
+prev_groups_cluster_col = None
+
 
 # Load dataset
 print("Lading dataframe...")
-fltr_df, orig_df, state_file, default_image, statuses = read_dataset()
+fltr_df, orig_df, state_file, state, default_image, statuses = read_dataset()
 print("Finished loading dataframe.")
-
-
-# Load or initialize state
-if os.path.exists(state_file):
-    with open(state_file, "r", encoding="utf-8") as f:
-        state = json.load(f)
-else:
-    state = {"selected_images": {}, "last_page": 0}
-    os.makedirs(os.path.dirname(state_file), exist_ok=True)
-    with open(state_file, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2, ensure_ascii=False)
 
 
 class ImageUpdate(BaseModel):
     basename: str
     status: str
+
+
+class ClusterUpdate(BaseModel):
+    name: str
+    cluster_id: str
 
 
 @app.get("/api/last")
@@ -52,10 +50,17 @@ async def get_last():
 
 
 @app.post("/api/save_page")
-async def save_page(page: int = 0):
-    state["last_page"] = page
-    with open(state_file, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2, ensure_ascii=False)
+async def save_page(request: Request):
+    data = await request.json()
+    state["settings"] = data
+    save_json(state_file, state)
+
+    return {"success": True}
+
+
+@app.post("/api/sync")
+async def sync_flush():
+    sync_state(orig_df, state)
 
     return {"success": True}
 
@@ -70,7 +75,8 @@ async def get_images(page: int = 0):
 
     # Save last_page on changing page
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
-        await save_page(page)
+        state["last_page"] = page
+        await save_json(page)
 
     return {
         "images": page_data,
@@ -78,6 +84,43 @@ async def get_images(page: int = 0):
         "current_page": page,
         "selected_images": state["selected_images"],
         "statuses": statuses,
+        "settings": state["settings"],
+    }
+
+
+def init_groups(cluster_col):
+    print("Initializing df for grouping...")
+    return fltr_df.sort_values(cluster_col)
+
+
+@app.get("/api/groups")
+async def get_groups(cluster_col: str, page: int = 0):
+    global groups_df, prev_groups_cluster_col, groups_idx2cluster
+    if groups_df is None or cluster_col != prev_groups_cluster_col:
+        groups_df = init_groups(cluster_col)
+        prev_groups_cluster_col = cluster_col
+        clusters = list(groups_df[cluster_col].unique())  # None values so do not sort!
+        groups_idx2cluster = dict(zip(range(len(clusters)), clusters))
+
+    page_data = (
+        groups_df[groups_df[cluster_col] == groups_idx2cluster[page]]
+        .reset_index()
+        .to_dict("records")
+    )
+    clusters = groups_df[cluster_col].unique()
+    total_pages = len(clusters)
+
+    # Save last_page on changing page
+    if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
+        state["last_page"] = page
+        await save_json(page)
+
+    return {
+        "images": page_data,
+        "total_pages": total_pages,
+        "current_page": page,
+        "fixed_groups": state["fixed_groups"],
+        "settings": state["settings"],
     }
 
 
@@ -96,8 +139,23 @@ async def update_image(update: ImageUpdate):
     elif not update.status and update.basename in state["selected_images"]:
         state["selected_images"].pop(update.basename)
 
-    with open(state_file, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2, ensure_ascii=False)
+    save_json(state_file, state)
+
+    return {"success": True}
+
+
+@app.post("/api/images/update_cluster")
+async def update_image(update: ClusterUpdate):
+    if update.name and isinstance(update.cluster_id, int):
+        state["fixed_groups"].update({update.name: update.cluster_id})
+    elif (
+        update.name
+        and not isinstance(update.cluster_id, int)
+        and update.cluster_id in state["fixed_groups"]
+    ):
+        state["fixed_groups"].pop(update.name)
+
+    save_json(state_file, state)
 
     return {"success": True}
 
