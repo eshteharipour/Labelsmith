@@ -23,14 +23,16 @@ app.add_middleware(
 # Constants
 PAGE_SIZE = 100
 SAVE_LAST_PAGE_ON_PAGE_CHANGE = False
-groups_df = None
 groups_idx2cluster = None
+clusters = None
 prev_groups_cluster_col = None
 
 
 # Load dataset
 print("Lading dataframe...")
-fltr_df, orig_df, state_file, state, default_image, statuses = read_dataset()
+fltr_df, orig_df, state_file, state, default_image, statuses, cluster_col = (
+    read_dataset()
+)
 print("Finished loading dataframe.")
 
 
@@ -46,7 +48,7 @@ class ClusterUpdate(BaseModel):
 
 @app.get("/api/last")
 async def get_last():
-    return {"last_page": state["last_page"]}
+    return {"last_page": state["settings"]["last_page"]}
 
 
 @app.post("/api/save_page")
@@ -75,7 +77,7 @@ async def get_images(page: int = 0):
 
     # Save last_page on changing page
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
-        state["last_page"] = page
+        state["settings"]["last_page"] = page
         await save_json(page)
 
     return {
@@ -88,31 +90,28 @@ async def get_images(page: int = 0):
     }
 
 
-def init_groups(cluster_col):
-    print("Initializing df for grouping...")
-    return fltr_df.sort_values(cluster_col)
-
-
 @app.get("/api/groups")
-async def get_groups(cluster_col: str, page: int = 0):
-    global groups_df, prev_groups_cluster_col, groups_idx2cluster
-    if groups_df is None or cluster_col != prev_groups_cluster_col:
-        groups_df = init_groups(cluster_col)
+async def get_groups(page: int = 0):
+    global prev_groups_cluster_col, clusters, groups_idx2cluster
+    if cluster_col != prev_groups_cluster_col:
         prev_groups_cluster_col = cluster_col
-        clusters = list(groups_df[cluster_col].unique())  # None values so do not sort!
+        clusters = list(fltr_df[cluster_col].unique())  # Has None so do not sort!
         groups_idx2cluster = dict(zip(range(len(clusters)), clusters))
 
+    if page >= len(clusters):
+        return {}
+
     page_data = (
-        groups_df[groups_df[cluster_col] == groups_idx2cluster[page]]
+        fltr_df[fltr_df[cluster_col] == groups_idx2cluster[page]]
         .reset_index()
         .to_dict("records")
     )
-    clusters = groups_df[cluster_col].unique()
+    clusters = fltr_df[cluster_col].unique()
     total_pages = len(clusters)
 
     # Save last_page on changing page
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
-        state["last_page"] = page
+        state["settings"]["last_page"] = page
         await save_json(page)
 
     return {

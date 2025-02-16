@@ -9,9 +9,6 @@
         <button :class="saveButtonClass" @click="saveData">
           {{ saveButtonText }}
         </button>
-        <CustomInput v-model="clusterCol" label="Cluster Column" placeholder="cluster_id" id="clustercol-input"
-          :error="clusterColError" @enter="handleClusterColSubmit(clusterCol)" />
-        <!-- <button @click="handleClusterColSubmit(clusterCol)" class="submit-button"> -->
         <button @click="taskMode = 'classify'" :class="{ 'bg-orange-500': taskMode === 'classify' }"
           class="px-4 py-2 rounded">
           Classify Mode
@@ -61,6 +58,7 @@
       </button>
       <CustomInput v-model="pageNum" label="Page number" placeholder="0" id="pagenum-input" :error="pageNumError"
         @enter="handlePageNumSubmit(pageNum)" />
+      <!-- <button @click="handleClusterColSubmit(pageNum)" class="submit-button"> -->
     </div>
 
     <!-- Grid View -->
@@ -74,6 +72,7 @@
           <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
           <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
           <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
+          <div v-if="image.split" class="text-sm text-gray-600">Split: {{ image.split }}</div>
           <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
           <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
         </div>
@@ -110,7 +109,7 @@
     <div v-else class="space-y-4">
       <div v-for="(image, index) in images" :key="image.id" class="flex items-center border rounded p-4">
         <div v-if="imageMode === true">
-          <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-32 object-cover" />
+          <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-48 object-cover" />
         </div>
         <div class="flex-1 px-4">
           <div class="font-bold">{{ image.name }}</div>
@@ -118,6 +117,7 @@
             <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
             <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
             <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
+            <div v-if="image.split" class="text-sm text-gray-600">Split: {{ image.split }}</div>
             <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
             <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
           </div>
@@ -184,8 +184,6 @@ export default {
       showSelected: false,
       currentPage: 0,
 
-      clusterCol: "cluster_id",
-      clusterColError: '',
       pageNum: 0,
       pageNumError: '',
 
@@ -234,7 +232,6 @@ export default {
 
         if (response.data.settings.taskMode) this.taskMode = response.data.settings.taskMode
         if (response.data.settings.groupMode) this.groupMode = response.data.settings.groupMode
-        if (response.data.settings.clusterCol) this.clusterCol = response.data.settings.clusterCol
         if (response.data.settings.imageMode) this.imageMode = response.data.settings.imageMode
         if (response.data.settings.viewMode) this.viewMode = response.data.settings.viewMode
       } catch (error) {
@@ -245,14 +242,13 @@ export default {
     async loadGroups() {
       this.images = []
       try {
-        const response = await axios.get(`/api/groups?cluster_col=${this.clusterCol}&page=${this.currentPage}`)
+        const response = await axios.get(`/api/groups?page=${this.currentPage}`)
         this.name2Cluster = this.isFixed(response.data.images, response.data.fixed_groups)
         this.images = response.data.images
         this.totalPages = response.data.total_pages
 
         if (response.data.settings.taskMode) this.taskMode = response.data.settings.taskMode
         if (response.data.settings.groupMode) this.groupMode = response.data.settings.groupMode
-        if (response.data.settings.clusterCol) this.clusterCol = response.data.settings.clusterCol
         if (response.data.settings.imageMode) this.imageMode = response.data.settings.imageMode
         if (response.data.settings.viewMode) this.viewMode = response.data.settings.viewMode
       } catch (error) {
@@ -260,10 +256,6 @@ export default {
       }
     },
 
-    async handleClusterColSubmit(clusterCol) {
-      if (this.groupMode == true)
-        await this.loadGroups()
-    },
 
     async handlePageNumSubmit(pageNum) {
       this.currentPage = pageNum
@@ -358,7 +350,6 @@ export default {
           page: this.currentPage,
           taskMode: this.taskMode,
           groupMode: this.groupMode,
-          clusterCol: this.clusterCol,
           imageMode: this.imageMode,
           viewMode: this.viewMode,
         })
