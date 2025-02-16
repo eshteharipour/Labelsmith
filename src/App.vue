@@ -6,44 +6,42 @@
     <!-- Controls -->
     <div class="flex justify-between mb-8">
       <div class="space-x-4">
-        <button :class="saveButtonClass" @click="saveData">
-          {{ saveButtonText }}
+        <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
+          {{ btnSaveSettings.text }}
         </button>
-        <button @click="taskMode = 'classify'" :class="{ 'bg-orange-500': taskMode === 'classify' }"
-          class="px-4 py-2 rounded">
-          Classify Mode
+        <button :class="btnSyncClfs.class" @click="syncClassifications(btnSyncClfs)">
+          {{ btnSyncClfs.text }}
         </button>
-        <button @click="taskMode = 'cluster'" :class="{ 'bg-orange-500': taskMode === 'cluster' }"
-          class="px-4 py-2 rounded">
-          Cluster Mode
-        </button>
-        <button @click="groupMode = false" :class="{ 'bg-purple-500': groupMode === false }" class="px-4 py-2 rounded">
-          Normal Mode
-        </button>
-        <button @click="groupMode = true" :class="{ 'bg-purple-500': groupMode === true }" class="px-4 py-2 rounded">
-          Group Mode
-        </button>
-        <button @click="imageMode = true" :class="{ 'bg-red-500': imageMode === true }" class="px-4 py-2 rounded">
-          Image Mode
-        </button>
-        <button @click="imageMode = false" :class="{ 'bg-red-500': imageMode === false }" class="px-4 py-2 rounded">
-          Text Mode
-        </button>
-        <button @click="viewMode = 'grid'" :class="{ 'bg-blue-500': viewMode === 'grid' }" class="px-4 py-2 rounded">
-          Grid View
-        </button>
-        <button @click="viewMode = 'row'" :class="{ 'bg-blue-500': viewMode === 'row' }" class="px-4 py-2 rounded">
-          Row View
-        </button>
-        <button :class="syncButtonClass" @click="syncFlush">
-          {{ syncButtonText }}
-        </button>
+        <div class="button-separator">
+          <button @click="pageMode = 'paginate'" :class="{ 'bg-purple-500': pageMode === 'paginate' }"
+            class="px-4 py-2 rounded">
+            Normal Mode
+          </button>
+          <button @click="pageMode = 'groups'" :class="{ 'bg-purple-500': pageMode === 'groups' }"
+            class="px-4 py-2 rounded">
+            Group Mode
+          </button>
+        </div>
+        <div class="button-separator">
+          <button @click="imageMode = true" :class="{ 'bg-red-500': imageMode === true }" class="px-4 py-2 rounded">
+            Image Mode
+          </button>
+          <button @click="imageMode = false" :class="{ 'bg-red-500': imageMode === false }" class="px-4 py-2 rounded">
+            Text Mode
+          </button>
+        </div>
+        <div class="button-separator">
+          <button @click="viewMode = 'grid'" :class="{ 'bg-blue-500': viewMode === 'grid' }" class="px-4 py-2 rounded">
+            Grid View
+          </button>
+          <button @click="viewMode = 'row'" :class="{ 'bg-blue-500': viewMode === 'row' }" class="px-4 py-2 rounded">
+            Row View
+          </button>
+        </div>
       </div>
-      <div v-if="taskMode === 'classify'">
-        <button @click="showSelected = !showSelected" class="px-4 py-2 bg-green-500 rounded">
-          {{ showSelected ? 'Back to Main View' : 'View Selected Images' }}
-        </button>
-      </div>
+      <button @click="showSelected = !showSelected" class="px-4 py-2 bg-green-500 rounded">
+        {{ showSelected ? 'Back to Main View' : 'View Classifications' }}
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -58,7 +56,7 @@
       </button>
       <CustomInput v-model="pageNum" label="Page number" placeholder="0" id="pagenum-input" :error="pageNumError"
         @enter="handlePageNumSubmit(pageNum)" />
-      <!-- <button @click="handleClusterColSubmit(pageNum)" class="submit-button"> -->
+      <!-- <button @click="handlePageNumSubmit(pageNum)" class="submit-button"> -->
     </div>
 
     <!-- Grid View -->
@@ -76,31 +74,24 @@
           <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
           <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
         </div>
-        <div v-if="imageMode === true && taskMode === 'classify'">
+        <div v-if="imageMode === true">
           <div class="dropdown">
-            <select v-model="images2selected[image.basename]"
-              @change="changeStatus(image, images2selected[image.basename])" class="dropdown-select" :class="{
+            <select v-model="imagesWithSelectedImages[image.basename]"
+              @change="changeStatus(image, imagesWithSelectedImages[image.basename])" class="dropdown-select" :class="{
                 'dropdown-select': true,
-                'default-select': images2selected[image.basename] === statuses[0],
-                'selected-select-1': images2selected[image.basename] === statuses[1],
-                'selected-select-2': images2selected[image.basename] === statuses[2],
-                'selected-select-3': images2selected[image.basename] === statuses[3],
-                'selected-select-4': images2selected[image.basename] === statuses[4]
+                'default-select': imagesWithSelectedImages[image.basename] === statuses[0],
+                'selected-select-1': imagesWithSelectedImages[image.basename] === statuses[1],
+                'selected-select-2': imagesWithSelectedImages[image.basename] === statuses[2],
+                'selected-select-3': imagesWithSelectedImages[image.basename] === statuses[3],
+                'selected-select-4': imagesWithSelectedImages[image.basename] === statuses[4]
               }">
               <option v-for="item in statuses" :key="item" :value="item">
                 <!-- :class="{ 'base-option': item === statuses[0], 'selected-option': item !== statuses[0] }"> -->
-                <!-- :selected="images2selected[image.basename] === item"> -->
+                <!-- :selected="imagesWithSelectedImages[image.basename] === item"> -->
                 {{ item }}
               </option>
             </select>
           </div>
-        </div>
-        <div v-if="taskMode === 'cluster'">
-          <CustomInput v-model="name2Cluster[image.name]" label="Cluster Column" placeholder="cluster_id"
-            :id="`clustercol-input-${index}`" :error="clusterColError" />
-          <button @click="handleFixCluster(image, name2Cluster[image.name])" class="submit-button">
-            Submit
-          </button>
         </div>
       </div>
     </div>
@@ -121,29 +112,22 @@
             <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
             <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
           </div>
-          <div v-if="imageMode === true && taskMode === 'classify'">
+          <div v-if="imageMode === true">
             <div class="dropdown">
-              <select v-model="images2selected[image.basename]"
-                @change="changeStatus(image, images2selected[image.basename])" class="dropdown-select" :class="{
+              <select v-model="imagesWithSelectedImages[image.basename]"
+                @change="changeStatus(image, imagesWithSelectedImages[image.basename])" class="dropdown-select" :class="{
                   'dropdown-select': true,
-                  'default-select': images2selected[image.basename] === statuses[0],
-                  'selected-select-1': images2selected[image.basename] === statuses[1],
-                  'selected-select-2': images2selected[image.basename] === statuses[2],
-                  'selected-select-3': images2selected[image.basename] === statuses[3],
-                  'selected-select-4': images2selected[image.basename] === statuses[4]
+                  'default-select': imagesWithSelectedImages[image.basename] === statuses[0],
+                  'selected-select-1': imagesWithSelectedImages[image.basename] === statuses[1],
+                  'selected-select-2': imagesWithSelectedImages[image.basename] === statuses[2],
+                  'selected-select-3': imagesWithSelectedImages[image.basename] === statuses[3],
+                  'selected-select-4': imagesWithSelectedImages[image.basename] === statuses[4]
                 }">
                 <option v-for="item in statuses" :key="item" :value="item">
                   {{ item }}
                 </option>
               </select>
             </div>
-          </div>
-          <div v-if="taskMode === 'cluster'">
-            <CustomInput v-model="name2Cluster[image.name]" label="Cluster Column" placeholder="cluster_id"
-              :id="`clustercol-input-${index}`" :error="clusterColError" />
-            <button @click="handleFixCluster(image, name2Cluster[image.name])" class="submit-button">
-              Submit
-            </button>
           </div>
         </div>
       </div>
@@ -178,8 +162,7 @@ export default {
   data() {
     return {
       viewMode: 'grid',
-      taskMode: "classify",
-      groupMode: false,
+      pageMode: 'paginate',
       imageMode: true,
       showSelected: false,
       currentPage: 0,
@@ -190,19 +173,22 @@ export default {
       images: [],
       statuses: [],
       selectedImages: {},
-      images2selected: {},
-      name2Cluster: {},
+      imagesWithSelectedImages: {},
       totalPages: 0,
 
-      saveButtonText: "Save",
-      saveButtonClass: "bg-green-100 text-white px-4 py-2 rounded",
-      saveOriginalText: "Save",
-      saveOriginalClass: "bg-green-500 text-white px-4 py-2 rounded",
+      btnSaveSettings: {
+        text: "Save",
+        class: "bg-green-500 text-white px-4 py-2 rounded",
+        origText: "Save",
+        origClass: "bg-green-500 text-white px-4 py-2 rounded",
+      },
 
-      syncButtonText: "Sync classifications",
-      syncButtonClass: "bg-green-100 text-white px-4 py-2 rounded",
-      syncOriginalText: "Sync classifications",
-      syncOriginalClass: "bg-green-500 text-white px-4 py-2 rounded",
+      btnSyncClfs: {
+        text: "Sync classifications",
+        class: "bg-green-500 text-white px-4 py-2 rounded",
+        origText: "Sync classifications",
+        origClass: "bg-green-500 text-white px-4 py-2 rounded",
+      },
     }
   },
 
@@ -220,49 +206,39 @@ export default {
       this.images = [] // Fixes duplicate products on changing page 
       // TODO: but spamming next/prev page makes vue not update anymore
       try {
-        const response = await axios.get(`/api/images?page=${this.currentPage}`)
-        this.selectedImages = response.data.selected_images
-        this.images2selected = this.isSelected(response.data.images, this.selectedImages)
+        let response
+        if (this.pageMode === 'paginate') {
+          response = await axios.get(`/api/images?page=${this.currentPage}`)
+        }
+        else if (this.pageMode === 'groups') {
+          response = await axios.get(`/api/groups?page=${this.currentPage}`)
+        }
 
+        this.selectedImages = response.data.selected_images
+        this.imagesWithSelectedImages = this.isSelected(response.data.images, this.selectedImages)
         this.images = response.data.images
         this.totalPages = response.data.total_pages
+
+        // Add disable option:
         const statuses = [""]
         statuses.push.apply(statuses, response.data.statuses)
         this.statuses = statuses
-
-        if (response.data.settings.taskMode) this.taskMode = response.data.settings.taskMode
-        if (response.data.settings.groupMode) this.groupMode = response.data.settings.groupMode
-        if (response.data.settings.imageMode) this.imageMode = response.data.settings.imageMode
-        if (response.data.settings.viewMode) this.viewMode = response.data.settings.viewMode
       } catch (error) {
         console.error('Error loading images:', error)
       }
     },
 
-    async loadGroups() {
-      this.images = []
-      try {
-        const response = await axios.get(`/api/groups?page=${this.currentPage}`)
-        this.name2Cluster = this.isFixed(response.data.images, response.data.fixed_groups)
-        this.images = response.data.images
-        this.totalPages = response.data.total_pages
-
-        if (response.data.settings.taskMode) this.taskMode = response.data.settings.taskMode
-        if (response.data.settings.groupMode) this.groupMode = response.data.settings.groupMode
-        if (response.data.settings.imageMode) this.imageMode = response.data.settings.imageMode
-        if (response.data.settings.viewMode) this.viewMode = response.data.settings.viewMode
-      } catch (error) {
-        console.error('Error loading images:', error)
-      }
+    async loadSettings() {
+      const response = await axios.get(`/api/load_settings`)
+      if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
+      if (response.data.settings.pageMode) this.pageMode = response.data.settings.pageMode
+      if (response.data.settings.imageMode) this.imageMode = response.data.settings.imageMode
+      if (response.data.settings.viewMode) this.viewMode = response.data.settings.viewMode
     },
-
 
     async handlePageNumSubmit(pageNum) {
       this.currentPage = pageNum
-      if (this.groupMode == false)
-        await this.loadImages()
-      else
-        await this.loadGroups()
+      await this.loadImages()
     },
 
     async changeStatus(image, status) {
@@ -281,22 +257,6 @@ export default {
       }
     },
 
-    async handleFixCluster(image, cluster_id) {
-      try {
-        await axios.post('/api/images/update_cluster', {
-          name: image.name,
-          cluster_id
-        })
-        if (!isNaN(Number(cluster_id))) {
-          this.name2Cluster[image.name] = cluster_id
-        } else if (image.name in this.name2Cluster) {
-          delete this.name2Cluster[image.name]
-        }
-      } catch (error) {
-        console.error('Error updating cluster:', error)
-      }
-    },
-
     isSelected(images, selectedImages) {
       return images.reduce((acc, img) => {
         acc[img.basename] = selectedImages[img.basename] ?? "";
@@ -304,125 +264,76 @@ export default {
       }, {})
     },
 
-    isFixed(images, selectedCluster) {
-      return images.reduce((acc, img) => {
-        acc[img.name] = selectedCluster[img.name] ?? "";
-        return acc;
-      }, {})
-    },
-
-
     async prevPage() {
       if (this.currentPage > 0) {
         this.currentPage--
-        if (this.groupMode == false)
-          await this.loadImages()
-        else
-          await this.loadGroups()
+        await this.loadImages()
       }
     },
 
     async nextPage() {
       if (this.currentPage < this.totalPages - 1) {
         this.currentPage++
-        if (this.groupMode == false)
-          await this.loadImages()
-        else
-          await this.loadGroups()
+        await this.loadImages()
       }
     },
 
-    async lastPage() {
-      try {
-        const response = await axios.get(`/api/last`)
-        this.currentPage = response.data.last_page
-      } catch (error) {
-        console.error('Error loading last page:', error)
+    async syncSettings(btnState) {
+      const apiUrl = '/api/save_settings'
+      const data = {
+        lastPage: this.currentPage,
+        pageMode: this.pageMode,
+        imageMode: this.imageMode,
+        viewMode: this.viewMode,
       }
+      await this.syncBtnHandler(apiUrl, data, btnState)
     },
 
-    async saveData() {
-      this.saveButtonText = "Saving...";
-      this.saveButtonClass = "bg-yellow-500 text-white px-4 py-2 rounded";
+    async syncClassifications(btnState) {
+      const apiUrl = '/api/sync_classifications'
+      const data = {}
+      await this.syncBtnHandler(apiUrl, data, btnState)
+    },
+
+    async syncBtnHandler(apiUrl, data, btnState) {
+      btnState.text = "Saving...";
+      btnState.class = "bg-yellow-500 text-white px-4 py-2 rounded";
 
       try {
-        const response = await axios.post('/api/save_page', {
-          page: this.currentPage,
-          taskMode: this.taskMode,
-          groupMode: this.groupMode,
-          imageMode: this.imageMode,
-          viewMode: this.viewMode,
-        })
+        const response = await axios.post(apiUrl, data);
 
         if (response.data.success) {
-          this.saveButtonText = "Saved!";
-          this.saveButtonClass = "bg-green-500 text-white px-4 py-2 rounded";
+          btnState.text = "Saved!";
+          btnState.class = "bg-green-500 text-white px-4 py-2 rounded";
 
           setTimeout(() => {
-            this.saveButtonText = this.saveOriginalText;
-            this.saveButtonClass = this.saveOriginalClass;
+            btnState.text = btnState.origText;
+            btnState.class = btnState.origClass;
           }, 2000);
         } else {
-          this.saveButtonText = "Failed!";
-          this.saveButtonClass = "bg-red-500 text-white px-4 py-2 rounded";
+          btnState.text = "Failed!";
+          btnState.class = "bg-red-500 text-white px-4 py-2 rounded";
 
           setTimeout(() => {
-            this.saveButtonText = this.saveOriginalText;
-            this.saveButtonClass = this.saveOriginalClass;
+            btnState.text = btnState.origText;
+            btnState.class = btnState.origClass;
           }, 2000);
         }
       } catch (error) {
-        this.saveButtonText = "Error!";
-        this.saveButtonClass = "bg-red-500 text-white px-4 py-2 rounded";
+        btnState.text = "Error!";
+        btnState.class = "bg-red-500 text-white px-4 py-2 rounded";
 
         setTimeout(() => {
-          this.saveButtonText = this.saveOriginalText;
-          this.saveButtonClass = this.saveOriginalClass;
+          btnState.text = btnState.origText;
+          btnState.class = btnState.origClass;
         }, 2000);
       }
     },
-    async syncFlush() {
-      this.syncButtonText = "Syncing...";
-      this.syncButtonClass = "bg-yellow-500 text-white px-4 py-2 rounded";
-
-      try {
-        const response = await axios.post('/api/sync')
-
-        if (response.data.success) {
-          this.syncButtonText = "Synced!";
-          this.syncButtonClass = "bg-green-500 text-white px-4 py-2 rounded";
-
-          setTimeout(() => {
-            this.syncButtonText = this.syncOriginalText;
-            this.syncButtonClass = this.syncOriginalClass;
-          }, 2000);
-        } else {
-          this.syncButtonText = "Failed!";
-          this.syncButtonClass = "bg-red-500 text-white px-4 py-2 rounded";
-
-          setTimeout(() => {
-            this.syncButtonText = this.syncOriginalText;
-            this.syncButtonClass = this.syncOriginalClass;
-          }, 2000);
-        }
-      } catch (error) {
-        this.syncButtonText = "Error!";
-        this.syncButtonClass = "bg-red-500 text-white px-4 py-2 rounded";
-
-        setTimeout(() => {
-          this.syncButtonText = this.syncOriginalText;
-          this.syncButtonClass = this.syncOriginalClass;
-        }, 2000);
-      }
-    }
   },
 
   async mounted() {
-    await this.lastPage()
-    if (this.groupMode == false)
-      await this.loadImages()
-    else
-      await this.loadGroups()
+    this.loadSettings()
+    await this.loadImages()
   },
 
   watch: {
@@ -430,28 +341,20 @@ export default {
       async handler(val) {
         if (val) {
           const response = await axios.get('/api/images/selected')
-          this.images2selected = this.isSelected(response.data.images, this.selectedImages)
+          this.imagesWithSelectedImages = this.isSelected(response.data.images, this.selectedImages)
           this.images = response.data.images
         } else {
           await this.loadImages()
         }
       }
     },
-    groupMode: {
+    pageMode: {
       async handler(val) {
         if (val) {
-          await this.loadGroups()
-        } else {
           await this.loadImages()
         }
       }
     },
-    // name2Cluster: {
-    //   deep: true,
-    //   handler(newVal) {
-    //     console.log('name2Cluster changed:', newVal);
-    //   }
-    // },
   }
 }
 </script>
@@ -550,5 +453,13 @@ button {
 
 .submit-button:hover {
   background-color: #2563eb;
+}
+
+.button-separator {
+  display: inline-block;
+  border: 2px solid #FF1493;
+  border-radius: 2px;
+  margin: 0 1px;
+  padding: 1px;
 }
 </style>

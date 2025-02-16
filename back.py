@@ -46,12 +46,20 @@ class ClusterUpdate(BaseModel):
     cluster_id: str
 
 
-@app.get("/api/last")
-async def get_last():
-    return {"last_page": state["settings"]["last_page"]}
+class MainResponse(BaseModel):
+    images: list[dict]
+    total_pages: int
+    current_page: int
+    selected_images: dict[str, str]
+    statuses: list[str]
 
 
-@app.post("/api/save_page")
+@app.get("/api/load_settings")
+async def save_page():
+    return {"settings": state["settings"]}
+
+
+@app.post("/api/save_settings")
 async def save_page(request: Request):
     data = await request.json()
     state["settings"] = data
@@ -60,7 +68,7 @@ async def save_page(request: Request):
     return {"success": True}
 
 
-@app.post("/api/sync")
+@app.post("/api/sync_classifications")
 async def sync_flush():
     sync_state(orig_df, state)
 
@@ -80,14 +88,13 @@ async def get_images(page: int = 0):
         state["settings"]["last_page"] = page
         await save_json(page)
 
-    return {
-        "images": page_data,
-        "total_pages": total_pages,
-        "current_page": page,
-        "selected_images": state["selected_images"],
-        "statuses": statuses,
-        "settings": state["settings"],
-    }
+    return MainResponse(
+        images=page_data,
+        total_pages=total_pages,
+        current_page=page,
+        selected_images=state["selected_images"],
+        statuses=statuses,
+    )
 
 
 @app.get("/api/groups")
@@ -114,13 +121,13 @@ async def get_groups(page: int = 0):
         state["settings"]["last_page"] = page
         await save_json(page)
 
-    return {
-        "images": page_data,
-        "total_pages": total_pages,
-        "current_page": page,
-        "fixed_groups": state["fixed_groups"],
-        "settings": state["settings"],
-    }
+    return MainResponse(
+        images=page_data,
+        total_pages=total_pages,
+        current_page=page,
+        selected_images=state["selected_images"],
+        statuses=statuses,
+    )
 
 
 @app.get("/api/images/selected")
@@ -137,22 +144,6 @@ async def update_image(update: ImageUpdate):
         state["selected_images"].update({update.basename: update.status})
     elif not update.status and update.basename in state["selected_images"]:
         state["selected_images"].pop(update.basename)
-
-    save_json(state_file, state)
-
-    return {"success": True}
-
-
-@app.post("/api/images/update_cluster")
-async def update_image(update: ClusterUpdate):
-    if update.name and isinstance(update.cluster_id, int):
-        state["fixed_groups"].update({update.name: update.cluster_id})
-    elif (
-        update.name
-        and not isinstance(update.cluster_id, int)
-        and update.cluster_id in state["fixed_groups"]
-    ):
-        state["fixed_groups"].pop(update.name)
 
     save_json(state_file, state)
 
