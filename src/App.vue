@@ -71,8 +71,9 @@
           <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
           <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
           <div v-if="image.split" class="text-sm text-gray-600">Split: {{ image.split }}</div>
-          <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
+          <div v-if="image.basename" class="text-sm truncate w-full text-gray-600">Bn: {{ image.basename }}</div>
           <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+          <div v-if="image.bn_freq" class="text-sm text-gray-600">bn freq: {{ image.bn_freq }}</div>
         </div>
         <div v-if="imageMode === true">
           <div class="dropdown">
@@ -109,8 +110,9 @@
             <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
             <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
             <div v-if="image.split" class="text-sm text-gray-600">Split: {{ image.split }}</div>
-            <div v-if="image.basename" class="text-sm text-gray-600">Bn: {{ image.basename }}</div>
+            <div v-if="image.basename" class="text-sm truncate w-full text-gray-600">Bn: {{ image.basename }}</div>
             <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
+            <div v-if="image.bn_freq" class="text-sm text-gray-600">bn freq: {{ image.bn_freq }}</div>
           </div>
           <div v-if="imageMode === true">
             <div class="dropdown">
