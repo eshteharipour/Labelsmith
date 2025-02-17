@@ -62,8 +62,11 @@
     <!-- Grid View -->
     <div v-if="viewMode === 'grid'" class="grid grid-cols-4 gap-4">
       <div v-for="(image, index) in images" :key="image.id" class="border rounded p-4">
-        <div v-if="imageMode === true">
+        <div v-if="imageMode === true && !showSelected">
           <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
+        </div>
+        <div v-if="imageMode === true && showSelected">
+          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
         </div>
         <div class="truncate" :title="image.name">{{ image.name }}</div>
         <div v-if="imageMode === true">
@@ -77,18 +80,18 @@
         </div>
         <div v-if="imageMode === true">
           <div class="dropdown">
-            <select v-model="imagesWithSelectedImages[image.basename]"
-              @change="changeStatus(image, imagesWithSelectedImages[image.basename])" class="dropdown-select" :class="{
+            <select v-model="basename2status[image.basename]"
+              @change="changeStatus(image, basename2status[image.basename])" class="dropdown-select" :class="{
                 'dropdown-select': true,
-                'default-select': imagesWithSelectedImages[image.basename] === statuses[0],
-                'selected-select-1': imagesWithSelectedImages[image.basename] === statuses[1],
-                'selected-select-2': imagesWithSelectedImages[image.basename] === statuses[2],
-                'selected-select-3': imagesWithSelectedImages[image.basename] === statuses[3],
-                'selected-select-4': imagesWithSelectedImages[image.basename] === statuses[4]
+                'default-select': basename2status[image.basename] === statuses[0],
+                'selected-select-1': basename2status[image.basename] === statuses[1],
+                'selected-select-2': basename2status[image.basename] === statuses[2],
+                'selected-select-3': basename2status[image.basename] === statuses[3],
+                'selected-select-4': basename2status[image.basename] === statuses[4]
               }">
               <option v-for="item in statuses" :key="item" :value="item">
                 <!-- :class="{ 'base-option': item === statuses[0], 'selected-option': item !== statuses[0] }"> -->
-                <!-- :selected="imagesWithSelectedImages[image.basename] === item"> -->
+                <!-- :selected="basename2status[image.basename] === item"> -->
                 {{ item }}
               </option>
             </select>
@@ -100,8 +103,13 @@
     <!-- Row View -->
     <div v-else class="space-y-4">
       <div v-for="(image, index) in images" :key="image.id" class="flex items-center border rounded p-4">
-        <div v-if="imageMode === true">
+        <div v-if="imageMode === true && !showSelected">
           <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-48 object-cover" />
+        </div>
+        <div v-if="imageMode === true && showSelected">
+          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name" class="w-48 h-48 object-cover" />
+        </div>
+        <div v-if="imageMode === true">
         </div>
         <div class="flex-1 px-4">
           <div class="font-bold">{{ image.name }}</div>
@@ -116,14 +124,14 @@
           </div>
           <div v-if="imageMode === true">
             <div class="dropdown">
-              <select v-model="imagesWithSelectedImages[image.basename]"
-                @change="changeStatus(image, imagesWithSelectedImages[image.basename])" class="dropdown-select" :class="{
+              <select v-model="basename2status[image.basename]"
+                @change="changeStatus(image, basename2status[image.basename])" class="dropdown-select" :class="{
                   'dropdown-select': true,
-                  'default-select': imagesWithSelectedImages[image.basename] === statuses[0],
-                  'selected-select-1': imagesWithSelectedImages[image.basename] === statuses[1],
-                  'selected-select-2': imagesWithSelectedImages[image.basename] === statuses[2],
-                  'selected-select-3': imagesWithSelectedImages[image.basename] === statuses[3],
-                  'selected-select-4': imagesWithSelectedImages[image.basename] === statuses[4]
+                  'default-select': basename2status[image.basename] === statuses[0],
+                  'selected-select-1': basename2status[image.basename] === statuses[1],
+                  'selected-select-2': basename2status[image.basename] === statuses[2],
+                  'selected-select-3': basename2status[image.basename] === statuses[3],
+                  'selected-select-4': basename2status[image.basename] === statuses[4]
                 }">
                 <option v-for="item in statuses" :key="item" :value="item">
                   {{ item }}
@@ -175,7 +183,7 @@ export default {
       images: [],
       statuses: [],
       selectedImages: {},
-      imagesWithSelectedImages: {},
+      basename2status: {},
       totalPages: 0,
 
       btnSaveSettings: {
@@ -217,7 +225,7 @@ export default {
         }
 
         this.selectedImages = response.data.selected_images
-        this.imagesWithSelectedImages = this.isSelected(response.data.images, this.selectedImages)
+        this.basename2status = this.createBasename2Status(response.data.images, this.selectedImages)
         this.images = response.data.images
         this.totalPages = response.data.total_pages
 
@@ -246,22 +254,23 @@ export default {
     async changeStatus(image, status) {
       try {
         await axios.post('/api/images/update', {
-          basename: image.basename,
+          path: image.path,
           status
         })
         if (status) {
-          this.selectedImages[image.basename] = status
-        } else if (image.basename in this.selectedImages) {
-          delete this.selectedImages[image.basename]
+          this.selectedImages[image.path] = status
+        } else if (image.path in this.selectedImages) {
+          delete this.selectedImages[image.path]
         }
+        this.basename2status = this.createBasename2Status(this.images, this.selectedImages)
       } catch (error) {
         console.error('Error updating image:', error)
       }
     },
 
-    isSelected(images, selectedImages) {
+    createBasename2Status(images, selectedImages) {
       return images.reduce((acc, img) => {
-        acc[img.basename] = selectedImages[img.basename] ?? "";
+        acc[img.basename] = selectedImages[img.path] ?? "";
         return acc;
       }, {})
     },
@@ -343,7 +352,7 @@ export default {
       async handler(val) {
         if (val) {
           const response = await axios.get('/api/images/selected')
-          this.imagesWithSelectedImages = this.isSelected(response.data.images, this.selectedImages)
+          this.basename2status = this.createBasename2Status(response.data.images, this.selectedImages)
           this.images = response.data.images
         } else {
           await this.loadImages()

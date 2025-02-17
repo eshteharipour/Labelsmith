@@ -1,4 +1,3 @@
-import json
 import os
 
 from fastapi import FastAPI, HTTPException, Request
@@ -30,14 +29,12 @@ prev_groups_cluster_col = None
 
 # Load dataset
 print("Lading dataframe...")
-fltr_df, orig_df, state_file, state, default_image, statuses, cluster_col = (
-    read_dataset()
-)
+fltr_df, state_file, state, default_image, statuses, cluster_col = read_dataset()
 print("Finished loading dataframe.")
 
 
 class ImageUpdate(BaseModel):
-    basename: str
+    path: str
     status: str
 
 
@@ -70,7 +67,8 @@ async def save_page(request: Request):
 
 @app.post("/api/sync_classifications")
 async def sync_flush():
-    save_text_dumps(orig_df, state)
+    save_json(state_file, state)
+    save_text_dumps(state)
 
     return {"success": True}
 
@@ -132,18 +130,22 @@ async def get_groups(page: int = 0):
 
 @app.get("/api/images/selected")
 async def get_selected_images():
-    selected_df = orig_df[
-        orig_df["basename"].isin(state["selected_images"])
-    ].drop_duplicates("basename")
-    return {"images": selected_df.reset_index().to_dict("records")}
+    images = [
+        {"id": i, "path": k, "basename": os.path.basename(k)}
+        for i, k in enumerate(state["selected_images"].keys())
+    ]
+    return {
+        "images": images,
+        "selected_images": state["selected_images"],
+    }
 
 
 @app.post("/api/images/update")
 async def update_image(update: ImageUpdate):
-    if update.status and update.basename:
-        state["selected_images"].update({update.basename: update.status})
-    elif not update.status and update.basename in state["selected_images"]:
-        state["selected_images"].pop(update.basename)
+    if update.status and update.path:
+        state["selected_images"].update({update.path: update.status})
+    elif not update.status and update.path in state["selected_images"]:
+        state["selected_images"].pop(update.path)
 
     save_json(state_file, state)
 
@@ -156,6 +158,23 @@ async def get_image(image_id: str):
         image_path = fltr_df.loc[image_id, "path"]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+    if not image_path:
+        return FileResponse(default_image)
+
+    if not os.path.exists(image_path):
+        raise HTTPException(
+            status_code=404, detail=f"Image file not found {image_path}"
+        )
+
+    try:
+        return FileResponse(image_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/images/selected_file")
+async def get_image(image_path: str):
 
     if not image_path:
         return FileResponse(default_image)
