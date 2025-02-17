@@ -237,7 +237,7 @@ export default {
     },
 
     async handlePageNumSubmit(pageNum) {
-      this.currentPage = pageNum
+      this.currentPage = parseInt(pageNum)
       await this.loadImages()
     },
 

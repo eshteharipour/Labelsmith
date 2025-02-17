@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from prod2vec.dataset.isee_cleaner import read_dataset, save_json, sync_state
+from prod2vec.dataset.isee_cleaner import read_dataset, save_json, save_text_dumps
 
 app = FastAPI()
 
@@ -70,7 +70,7 @@ async def save_page(request: Request):
 
 @app.post("/api/sync_classifications")
 async def sync_flush():
-    sync_state(orig_df, state)
+    save_text_dumps(orig_df, state)
 
     return {"success": True}
 
