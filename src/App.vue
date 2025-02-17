@@ -390,21 +390,21 @@ button {
 }
 
 .selected-select-2 {
-  background-color: #33A1FF;
-  /* Sky Blue */
-  color: white;
-}
-
-.selected-select-3 {
   background-color: #33FF57;
   /* Bright Green */
   color: white;
 }
 
-.selected-select-4 {
+.selected-select-3 {
   background-color: #FFD700;
   /* Gold */
   color: black;
+}
+
+.selected-select-4 {
+  background-color: #33A1FF;
+  /* Sky Blue */
+  color: white;
 }
 
 .selected-select-5 {
