@@ -66,7 +66,8 @@
           <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
         </div>
         <div v-if="imageMode === true && showSelected">
-          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
+          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
+            class="w-full h-48 object-cover mb-2" />
         </div>
         <div class="truncate" :title="image.name">{{ image.name }}</div>
         <div v-if="imageMode === true">
@@ -75,6 +76,7 @@
           <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
           <div v-if="image.split" class="text-sm text-gray-600">Split: {{ image.split }}</div>
           <div v-if="image.basename" class="text-sm truncate w-full text-gray-600">Bn: {{ image.basename }}</div>
+          <div v-if="image.path" class="text-sm truncate w-full text-gray-600">Path: {{ image.path }}</div>
           <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
           <div v-if="image.bn_freq" class="text-sm text-gray-600">bn freq: {{ image.bn_freq }}</div>
         </div>
@@ -87,7 +89,13 @@
                 'selected-select-1': basename2status[image.basename] === statuses[1],
                 'selected-select-2': basename2status[image.basename] === statuses[2],
                 'selected-select-3': basename2status[image.basename] === statuses[3],
-                'selected-select-4': basename2status[image.basename] === statuses[4]
+                'selected-select-4': basename2status[image.basename] === statuses[4],
+                'selected-select-5': basename2status[image.basename] === statuses[5],
+                'selected-select-6': basename2status[image.basename] === statuses[6],
+                'selected-select-7': basename2status[image.basename] === statuses[7],
+                'selected-select-8': basename2status[image.basename] === statuses[8],
+                'selected-select-9': basename2status[image.basename] === statuses[9],
+                'selected-select-10': basename2status[image.basename] === statuses[10]
               }">
               <option v-for="item in statuses" :key="item" :value="item">
                 <!-- :class="{ 'base-option': item === statuses[0], 'selected-option': item !== statuses[0] }"> -->
@@ -107,7 +115,8 @@
           <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-48 object-cover" />
         </div>
         <div v-if="imageMode === true && showSelected">
-          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name" class="w-48 h-48 object-cover" />
+          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
+            class="w-48 h-48 object-cover" />
         </div>
         <div v-if="imageMode === true">
         </div>
@@ -119,6 +128,7 @@
             <div v-if="image.cluster_id" class="text-sm text-gray-600">Cluster ID: {{ image.cluster_id }}</div>
             <div v-if="image.split" class="text-sm text-gray-600">Split: {{ image.split }}</div>
             <div v-if="image.basename" class="text-sm truncate w-full text-gray-600">Bn: {{ image.basename }}</div>
+            <div v-if="image.path" class="text-sm truncate w-full text-gray-600">Path: {{ image.path }}</div>
             <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
             <div v-if="image.bn_freq" class="text-sm text-gray-600">bn freq: {{ image.bn_freq }}</div>
           </div>
@@ -131,7 +141,13 @@
                   'selected-select-1': basename2status[image.basename] === statuses[1],
                   'selected-select-2': basename2status[image.basename] === statuses[2],
                   'selected-select-3': basename2status[image.basename] === statuses[3],
-                  'selected-select-4': basename2status[image.basename] === statuses[4]
+                  'selected-select-4': basename2status[image.basename] === statuses[4],
+                  'selected-select-5': basename2status[image.basename] === statuses[5],
+                  'selected-select-6': basename2status[image.basename] === statuses[6],
+                  'selected-select-7': basename2status[image.basename] === statuses[7],
+                  'selected-select-8': basename2status[image.basename] === statuses[8],
+                  'selected-select-9': basename2status[image.basename] === statuses[9],
+                  'selected-select-10': basename2status[image.basename] === statuses[10]
                 }">
                 <option v-for="item in statuses" :key="item" :value="item">
                   {{ item }}

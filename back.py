@@ -29,7 +29,16 @@ prev_groups_cluster_col = None
 
 # Load dataset
 print("Lading dataframe...")
-fltr_df, state_file, state, default_image, statuses, cluster_col = read_dataset()
+(
+    fltr_df,
+    clf_dict,
+    orig_dict,
+    state_file,
+    state,
+    default_image,
+    statuses,
+    cluster_col,
+) = read_dataset()
 print("Finished loading dataframe.")
 
 
@@ -131,7 +140,15 @@ async def get_groups(page: int = 0):
 @app.get("/api/images/selected")
 async def get_selected_images():
     images = [
-        {"id": i, "path": k, "basename": os.path.basename(k)}
+        (
+            clf_dict[k]
+            if k in clf_dict
+            else (
+                orig_dict[k]
+                if k in orig_dict
+                else {"id": i, "path": k, "basename": os.path.basename(k)}
+            )
+        )
         for i, k in enumerate(state["selected_images"].keys())
     ]
     return {
