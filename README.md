@@ -5,13 +5,14 @@ cd frontend
 npm install
 npm run build
 uvicorn main:app --reload
-python -m cleaner.back
+python -m cleaner.classifier
 uvicorn backend.main:app --reload
 uvicorn backend.main:app --reload --log-level debug
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
-uvicorn cleaner.back:app --reload
-uvicorn cleaner.back:app --reload --workers 8
+uvicorn cleaner.classifier:app --reload
+uvicorn cleaner.classifier:app --reload --workers 8
+uvicorn cleaner.matcher:app --reload --workers 8
 
 npm run build && npm run preview
 ```
