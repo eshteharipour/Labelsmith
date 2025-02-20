@@ -6,7 +6,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from prod2vec.dataset.isee_matcher import read_dataset, save_dataset, save_json
+from prod2vec.dataset.isee_matcher import (
+    mark_complete,
+    read_dataset,
+    save_dataset,
+    save_json,
+)
 
 app = FastAPI()
 
@@ -50,6 +55,13 @@ async def save_page(request: Request):
     data = await request.json()
     state["settings"] = data
     save_json(state_file, state)
+
+    return {"success": True}
+
+
+@app.post("/api/mark_complete")
+async def save_page():
+    mark_complete(df)
 
     return {"success": True}
 

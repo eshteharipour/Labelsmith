@@ -9,6 +9,9 @@
                 <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
                     {{ btnSaveSettings.text }}
                 </button>
+                <button :class="btnSyncMatches.class" @click="markDfAsComplete(btnSyncMatches)">
+                    {{ btnSyncMatches.text }}
+                </button>
             </div>
         </div>
 
@@ -41,7 +44,7 @@
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.source_name }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
-                            :alt="image.source_name" class="w-48 h-48 object-cover rounded-lg border" />
+                            :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
                     <!-- Matching Controls -->
                     <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
@@ -65,7 +68,7 @@
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
-                            :alt="image.target_name" class="w-48 h-48 object-cover rounded-lg border" />
+                            :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
                 </div>
             </template>
@@ -115,9 +118,9 @@ export default {
             },
 
             btnSyncMatches: {
-                text: "Sync classifications",
+                text: "Flush dataset to final dest",
                 class: "bg-green-500 text-white px-4 py-2 rounded",
-                origText: "Sync classifications",
+                origText: "Flush dataset to final dest",
                 origClass: "bg-green-500 text-white px-4 py-2 rounded",
             },
         }
@@ -186,6 +189,11 @@ export default {
 
             // Show separator if current name is different from previous name
             return this.images[index].source_name !== this.images[index - 1].source_name;
+        },
+
+        async markDfAsComplete(btnState) {
+            const apiUrl = '/api/mark_complete'
+            await this.syncBtnHandler(apiUrl, {}, btnState)
         },
 
         async syncSettings(btnState) {
