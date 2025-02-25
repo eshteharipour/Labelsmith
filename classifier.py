@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from prod2vec.dataset.isee_cleaner import read_dataset, save_json, save_text_dumps
+from prod2vec.dataset.isee_classifier import read_dataset, save_json, save_text_dumps
 
 app = FastAPI()
 
@@ -171,6 +171,8 @@ async def update_image(update: ImageUpdate):
 
 @app.get("/api/images/file/{image_id}")
 async def get_image(image_id: str):
+    """Deprecated due to issues with browser cache."""
+
     try:
         image_path = fltr_df.loc[image_id, "path"]
     except Exception as e:
@@ -190,7 +192,7 @@ async def get_image(image_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/images/selected_file")
+@app.get("/api/images/file")
 async def get_image(image_path: str):
 
     if not image_path:

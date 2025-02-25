@@ -62,11 +62,8 @@
     <!-- Grid View -->
     <div v-if="viewMode === 'grid'" class="grid grid-cols-4 gap-4">
       <div v-for="(image, index) in images" :key="image.id" class="border rounded p-4">
-        <div v-if="imageMode === true && !showSelected">
-          <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-full h-48 object-cover mb-2" />
-        </div>
-        <div v-if="imageMode === true && showSelected">
-          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
+        <div v-if="imageMode === true">
+          <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
             class="w-full h-48 object-cover mb-2" />
         </div>
         <div class="truncate" :title="image.name">{{ image.name }}</div>
@@ -111,11 +108,8 @@
     <!-- Row View -->
     <div v-else class="space-y-4">
       <div v-for="(image, index) in images" :key="image.id" class="flex items-center border rounded p-4">
-        <div v-if="imageMode === true && !showSelected">
-          <img :src="`/api/images/file/${image.id}`" :alt="image.name" class="w-48 h-48 object-cover" />
-        </div>
-        <div v-if="imageMode === true && showSelected">
-          <img :src="`/api/images/selected_file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
+        <div v-if="imageMode === true">
+          <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
             class="w-48 h-48 object-cover" />
         </div>
         <div v-if="imageMode === true">
