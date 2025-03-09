@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from prod2vec.dataset.isee_matcher import (
-    mark_complete,
+    DatasetEnum,
     read_dataset,
     save_dataset,
     save_json,
@@ -32,7 +32,9 @@ COLUMNS = ["source_name", "source_image", "target_name", "target_image", "matchi
 
 # Load dataset
 print("Lading dataframe...")
-df, state, state_file, default_image = read_dataset()
+DATASET = DatasetEnum.All
+SHOW_REVIEWD = False
+df, state, state_file, default_image = read_dataset(DATASET, SHOW_REVIEWD)
 print("Finished loading dataframe.")
 
 
@@ -55,13 +57,6 @@ async def save_page(request: Request):
     data = await request.json()
     state["settings"] = data
     save_json(state_file, state)
-
-    return {"success": True}
-
-
-@app.post("/api/mark_complete")
-async def save_page():
-    mark_complete(df)
 
     return {"success": True}
 

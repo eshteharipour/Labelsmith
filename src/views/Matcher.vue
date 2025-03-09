@@ -9,9 +9,6 @@
                 <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
                     {{ btnSaveSettings.text }}
                 </button>
-                <button :class="btnSyncMatches.class" @click="markDfAsComplete(btnSyncMatches)">
-                    {{ btnSyncMatches.text }}
-                </button>
             </div>
         </div>
 
@@ -48,6 +45,8 @@
                     </div>
                     <!-- Matching Controls -->
                     <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
+                        <div class="text-sm text-gray-600">Last evaluator</div>
+                        <div class="text-sm text-gray-600">{{ image.evaluator }}</div>
                         <div class="text-sm text-gray-600">Match Status</div>
                         <div class="flex space-x-2">
                             <button @click="updateMatching(image, index, true)"
@@ -191,10 +190,6 @@ export default {
             return this.images[index].source_name !== this.images[index - 1].source_name;
         },
 
-        async markDfAsComplete(btnState) {
-            const apiUrl = '/api/mark_complete'
-            await this.syncBtnHandler(apiUrl, {}, btnState)
-        },
 
         async syncSettings(btnState) {
             const apiUrl = '/api/save_settings'
