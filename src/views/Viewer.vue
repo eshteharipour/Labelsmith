@@ -9,9 +9,6 @@
                 <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
                     {{ btnSaveSettings.text }}
                 </button>
-                <button :class="btnSyncMatches.class" @click="markDfAsComplete(btnSyncMatches)">
-                    {{ btnSyncMatches.text }}
-                </button>
             </div>
         </div>
 
@@ -35,42 +32,22 @@
         <div class="space-y-6">
             <!-- Separator -->
             <template v-for="(image, index) in images" :key="image.id">
-                <!-- <div v-if="shouldShowSeparator(index)" class="bg-gray-100 p-3 rounded-lg font-semibold"> -->
-                <div v-if="shouldShowSeparator(index)" class="separator">
-                </div>
                 <!-- Image Card -->
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
-                    <!-- Source Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2">{{ image.source_name }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
-                            :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
+                        <div class="text-lg font-semibold mb-2">{{ image.name }}</div>
+                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`"
+                            :alt="image.path" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
-                    <!-- Matching Controls -->
-                    <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
-                        <div class="text-sm text-gray-600">Last evaluator</div>
-                        <div class="text-sm text-gray-600">{{ image.evaluator }}</div>
-                        <div class="text-sm text-gray-600">Match Status</div>
-                        <div class="flex space-x-2">
-                            <button @click="updateMatching(image, index, true)"
-                                class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === true
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
-                                Match
-                            </button>
-                            <button @click="updateMatching(image, index, false)"
-                                class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === false
-                                    ? 'bg-red-600 text-white hover:bg-red-700'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
-                                No Match
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Target Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
-                            :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
+                        <div class="text-lg font-semibold mb-2">{{ image.rn18_l2_d }}</div>
+                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.rn18_l2)}`"
+                            :alt="image.rn18_l2" class="w-48 h-48 object-cover rounded-lg border" />
+                    </div>
+                    <div class="flex flex-col items-center w-1/3">
+                        <div class="text-lg font-semibold mb-2">{{ image.rn18_ip_d }}</div>
+                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.rn18_ip)}`"
+                            :alt="image.rn18_ip" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
                 </div>
             </template>
@@ -118,13 +95,6 @@ export default {
                 origText: "Save",
                 origClass: "bg-green-500 text-white px-4 py-2 rounded",
             },
-
-            btnSyncMatches: {
-                text: "Save dataset to file",
-                class: "bg-green-500 text-white px-4 py-2 rounded",
-                origText: "Save dataset to file",
-                origClass: "bg-green-500 text-white px-4 py-2 rounded",
-            },
         }
     },
 
@@ -147,25 +117,6 @@ export default {
             if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
         },
 
-        async updateMatching(image, index, match) {
-            try {
-                const response = await axios.post('/api/images/update', {
-                    id: image.id,
-                    source_name: image.source_name,
-                    source_image: image.source_image,
-                    target_name: image.target_name,
-                    target_image: image.target_image,
-                    matching: match
-                })
-                if (response.data.success) {
-                    // this.images[index].matching = match
-                    image.matching = match
-                }
-            } catch (error) {
-                console.error('Error updating image:', error)
-            }
-        },
-
         async handlePageNumSubmit(pageNum) {
             this.currentPage = parseInt(pageNum)
             await this.loadImages()
@@ -183,19 +134,6 @@ export default {
                 this.currentPage++
                 await this.loadImages()
             }
-        },
-
-        shouldShowSeparator(index) {
-            // Don't show separator for first item
-            if (index === 0) return true;
-
-            // Show separator if current name is different from previous name
-            return this.images[index].source_name !== this.images[index - 1].source_name;
-        },
-
-        async markDfAsComplete(btnState) {
-            const apiUrl = '/api/mark_complete'
-            await this.syncBtnHandler(apiUrl, {}, btnState)
         },
 
         async syncSettings(btnState) {
@@ -276,16 +214,5 @@ button {
     border-radius: 2px;
     margin: 0 1px;
     padding: 1px;
-}
-
-.separator {
-    margin: 12px 0 8px 0;
-    padding: 4px 12px;
-    background: linear-gradient(to right, #4f46e5, #7c3aed);
-    color: white;
-    font-weight: 500;
-    font-size: 0.875rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 </style>

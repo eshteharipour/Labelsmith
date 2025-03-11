@@ -3,7 +3,8 @@
         <!-- Navigation links -->
         <nav>
             <router-link to="/">Classifier</router-link> |
-            <router-link to="/matcher">Matcher</router-link>
+            <router-link to="/matcher">Matcher</router-link> |
+            <router-link to="/viewer">Viewer</router-link>
         </nav>
 
         <router-view></router-view>
