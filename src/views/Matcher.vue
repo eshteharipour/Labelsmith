@@ -9,6 +9,9 @@
                 <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
                     {{ btnSaveSettings.text }}
                 </button>
+                <button :class="btnSyncMatches.class" @click="markDfAsComplete(btnSyncMatches)">
+                    {{ btnSyncMatches.text }}
+                </button>
             </div>
         </div>
 
@@ -117,9 +120,9 @@ export default {
             },
 
             btnSyncMatches: {
-                text: "Flush dataset to final dest",
+                text: "Save dataset to file",
                 class: "bg-green-500 text-white px-4 py-2 rounded",
-                origText: "Flush dataset to final dest",
+                origText: "Save dataset to file",
                 origClass: "bg-green-500 text-white px-4 py-2 rounded",
             },
         }
@@ -190,6 +193,10 @@ export default {
             return this.images[index].source_name !== this.images[index - 1].source_name;
         },
 
+        async markDfAsComplete(btnState) {
+            const apiUrl = '/api/mark_complete'
+            await this.syncBtnHandler(apiUrl, {}, btnState)
+        },
 
         async syncSettings(btnState) {
             const apiUrl = '/api/save_settings'

@@ -61,6 +61,13 @@ async def save_page(request: Request):
     return {"success": True}
 
 
+@app.post("/api/mark_complete")
+async def save_page():
+
+    save_dataset(df)
+    return {"success": True}
+
+
 @app.get("/api/images")
 async def get_images(page: int = 0):
     start_idx = page * PAGE_SIZE
@@ -94,8 +101,6 @@ async def update_image(update: MatchUpdate):
         return {"success": False}
 
     df.loc[update.id, "matching"] = update.matching
-    save_dataset(df)
-
     return {"success": True}
 
 
