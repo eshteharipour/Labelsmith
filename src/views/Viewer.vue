@@ -36,18 +36,29 @@
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.name }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`"
-                            :alt="image.path" class="w-48 h-48 object-cover rounded-lg border" />
+                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.path"
+                            class="w-48 h-48 object-cover rounded-lg border" />
+                        <div v-if="image.path" class="text-sm truncate w-full text-gray-600">{{
+                            image.path.split('/').slice(-1).join() }}
+                        </div>
                     </div>
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.rn18_l2_d }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.rn18_l2)}`"
                             :alt="image.rn18_l2" class="w-48 h-48 object-cover rounded-lg border" />
+                        <div v-if="image.rn18_l2" class="text-sm truncate w-full text-gray-600">{{
+                            image.rn18_l2.split('/').slice(-1).join()
+                            }}
+                        </div>
                     </div>
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.rn18_ip_d }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.rn18_ip)}`"
                             :alt="image.rn18_ip" class="w-48 h-48 object-cover rounded-lg border" />
+                        <div v-if="image.rn18_ip" class="text-sm truncate w-full text-gray-600">{{
+                            image.rn18_ip.split('/').slice(-1).join()
+                            }}
+                        </div>
                     </div>
                 </div>
             </template>
