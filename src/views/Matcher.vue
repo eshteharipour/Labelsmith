@@ -50,6 +50,8 @@
                     <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
                         <div class="text-sm text-gray-600">Last evaluator</div>
                         <div class="text-sm text-gray-600">{{ image.evaluator }}</div>
+                        <div class="text-sm text-gray-600">LLM response</div>
+                        <div class="text-sm text-gray-600">{{ image.response }}</div>
                         <div class="text-sm text-gray-600">Match Status</div>
                         <div class="flex space-x-2">
                             <button @click="updateMatching(image, index, true)"
