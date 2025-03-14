@@ -1,5 +1,6 @@
 import os
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -32,9 +33,10 @@ COLUMNS = ["source_name", "source_image", "target_name", "target_image", "matchi
 
 # Load dataset
 print("Lading dataframe...")
-DATASET = DatasetEnum.All
-SHOW_REVIEWD = False
+DATASET = DatasetEnum.Human
+SHOW_REVIEWD = True
 df, state, state_file, default_image = read_dataset(DATASET, SHOW_REVIEWD)
+result_df = pd.DataFrame(columns=COLUMNS)
 print("Finished loading dataframe.")
 
 
@@ -90,17 +92,20 @@ async def get_images(page: int = 0):
 
 @app.post("/api/images/update")
 async def update_image(update: MatchUpdate):
-    q = df.loc[update.id]
-    if update.source_name != q.source_name:
-        return {"success": False}
-    if update.source_image != q.source_image:
-        return {"success": False}
-    if update.target_name != q.target_name:
-        return {"success": False}
-    if update.target_image != q.target_image:
-        return {"success": False}
+    global result_df
+    data = pd.DataFrame(
+        [
+            update.source_name,
+            update.source_image,
+            update.target_name,
+            update.target_image,
+            update.matching,
+        ],
+        columns=COLUMNS,
+        dtype=object,
+    )
 
-    df.loc[update.id, "matching"] = update.matching
+    result_df = pd.concat([result_df, data], ignore_index=True)
     return {"success": True}
 
 
