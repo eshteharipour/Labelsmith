@@ -66,7 +66,7 @@ async def save_page(request: Request):
 @app.post("/api/mark_complete")
 async def save_page():
 
-    save_dataset(df)
+    save_dataset(result_df)
     return {"success": True}
 
 
@@ -108,6 +108,19 @@ async def update_image(update: MatchUpdate):
     )
 
     result_df = pd.concat([result_df, data], ignore_index=True)
+
+    q = df.loc[update.id]
+    if update.source_name != q.source_name:
+        return {"success": False}
+    if update.source_image != q.source_image:
+        return {"success": False}
+    if update.target_name != q.target_name:
+        return {"success": False}
+    if update.target_image != q.target_image:
+        return {"success": False}
+
+    df.loc[update.id, "matching"] = update.matching
+
     return {"success": True}
 
 
