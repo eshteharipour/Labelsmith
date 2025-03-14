@@ -36,7 +36,7 @@ print("Lading dataframe...")
 DATASET = DatasetEnum.Human
 SHOW_REVIEWD = True
 df, state, state_file, default_image = read_dataset(DATASET, SHOW_REVIEWD)
-result_df = pd.DataFrame(columns=COLUMNS)
+result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
 print("Finished loading dataframe.")
 
 
@@ -95,11 +95,13 @@ async def update_image(update: MatchUpdate):
     global result_df
     data = pd.DataFrame(
         [
-            update.source_name,
-            update.source_image,
-            update.target_name,
-            update.target_image,
-            update.matching,
+            [
+                update.source_name,
+                update.source_image,
+                update.target_name,
+                update.target_image,
+                update.matching,
+            ]
         ],
         columns=COLUMNS,
         dtype=object,
