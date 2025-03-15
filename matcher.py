@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -14,6 +15,7 @@ from prod2vec.dataset.isee_matcher import (
     save_json,
 )
 
+load_dotenv()
 app = FastAPI()
 
 # CORS middleware
@@ -33,8 +35,8 @@ COLUMNS = ["source_name", "source_image", "target_name", "target_image", "matchi
 
 # Load dataset
 print("Lading dataframe...")
-DATASET = DatasetEnum.Human
-SHOW_REVIEWD = True
+DATASET = DatasetEnum(os.environ["dataset"].lower().strip())
+SHOW_REVIEWD = os.environ["show_reviewed"].lower().strip() == "true"
 df, state, state_file, default_image = read_dataset(DATASET, SHOW_REVIEWD)
 result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
 print("Finished loading dataframe.")
