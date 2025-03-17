@@ -76,6 +76,7 @@
           <div v-if="image.path" class="text-sm truncate w-full text-gray-600">Path: {{ image.path }}</div>
           <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
           <div v-if="image.bn_freq" class="text-sm text-gray-600">bn freq: {{ image.bn_freq }}</div>
+          <div v-if="image.blur" class="text-sm text-gray-600">blur: {{ image.blur }}</div>
         </div>
         <div v-if="imageMode === true">
           <div class="dropdown">
@@ -125,6 +126,7 @@
             <div v-if="image.path" class="text-sm truncate w-full text-gray-600">Path: {{ image.path }}</div>
             <div v-if="image.dbscan" class="text-sm text-gray-600">dbscan: {{ image.dbscan }}</div>
             <div v-if="image.bn_freq" class="text-sm text-gray-600">bn freq: {{ image.bn_freq }}</div>
+            <div v-if="image.blur" class="text-sm text-gray-600">blur: {{ image.blur }}</div>
           </div>
           <div v-if="imageMode === true">
             <div class="dropdown">
