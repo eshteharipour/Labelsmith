@@ -56,8 +56,10 @@
                     <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
                         <div class="text-sm text-gray-600">Last evaluator</div>
                         <div class="text-sm text-gray-600">{{ image.evaluator }}</div>
-                        <div class="text-sm text-gray-600">LLM response</div>
-                        <div class="text-sm text-gray-600">{{ image.response }}</div>
+                        <div v-if="image.response" class="text-sm text-gray-600">LLM response</div>
+                        <div v-if="image.response" class="text-sm text-gray-600">{{ image.response }}</div>
+                        <div v-if="image.response2" class="text-sm text-gray-600">LLM 2 response</div>
+                        <div v-if="image.response2" class="text-sm text-gray-600">{{ image.response2 }}</div>
                         <div class="text-sm text-gray-600">Match Status</div>
                         <div class="flex space-x-2">
                             <button @click="updateMatching(image, index, true)"
@@ -76,7 +78,9 @@
                     </div>
                     <!-- Target Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div>
+                        <div class="text-lg font-semibold mb-2"
+                            v-html="matchHighlighter(image.target_name, image.source_name)"></div>
+                        <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
                             :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
@@ -275,6 +279,22 @@ export default {
                 }, 2000);
             }
         },
+
+        matchHighlighter(text, searchString) {
+            if (!searchString || !text) return text;
+
+            const searchWords = searchString.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+
+            if (searchWords.length === 0) return text;
+
+            // Use word boundaries to match whole words only
+            const pattern = new RegExp(`\\b(${searchWords.map(word => this.escapeRegExp(word)).join('|')})\\b`, 'gi');
+
+            return text.replace(pattern, '<span class="highlight">$1</span>');
+        },
+        escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        },
     },
 
     async mounted() {
@@ -287,6 +307,13 @@ export default {
 <style>
 button {
     transition: background-color 0.3s ease-in-out;
+}
+
+.highlight {
+    background-color: yellow;
+    /* or any color you prefer */
+    padding: 2px 4px;
+    border-radius: 3px;
 }
 </style>
 
