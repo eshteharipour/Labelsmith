@@ -30,7 +30,7 @@ print("Finished loading dataframe.")
 
 
 @app.get("/api/load_settings")
-async def save_page():
+async def load_page():
     return {"settings": state["settings"]}
 
 

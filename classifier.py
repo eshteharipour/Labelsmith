@@ -61,7 +61,7 @@ class MainResponse(BaseModel):
 
 
 @app.get("/api/load_settings")
-async def save_page():
+async def load_page():
     return {"settings": state["settings"]}
 
 
@@ -170,7 +170,7 @@ async def update_image(update: ImageUpdate):
 
 
 @app.get("/api/images/file/{image_id}")
-async def get_image(image_id: str):
+async def _get_image(image_id: str):
     """Deprecated due to issues with browser cache."""
 
     try:

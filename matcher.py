@@ -52,7 +52,7 @@ class MatchUpdate(BaseModel):
 
 
 @app.get("/api/load_settings")
-async def save_page():
+async def load_page():
     return {"settings": state["settings"]}
 
 
@@ -65,10 +65,29 @@ async def save_page(request: Request):
     return {"success": True}
 
 
-@app.post("/api/mark_complete")
-async def save_page():
+@app.post("/api/sync_changes")
+async def save_data():
 
     save_dataset(result_df)
+    return {"success": True}
+
+
+@app.post("/api/sync_page")
+async def save_data_page(request: Request):
+    page = int(request.json()["page"])
+    start_idx = page * PAGE_SIZE
+    end_idx = start_idx + PAGE_SIZE
+
+    page_data = df.iloc[start_idx:end_idx].reset_index()
+
+    save_dataset(page_data)
+    return {"success": True}
+
+
+@app.post("/api/sync_all")
+async def save_data_all():
+
+    save_dataset(df)
     return {"success": True}
 
 
@@ -108,7 +127,6 @@ async def update_image(update: MatchUpdate):
         columns=COLUMNS,
         dtype=object,
     )
-
     result_df = pd.concat([result_df, data], ignore_index=True)
 
     q = df.loc[update.id]

@@ -9,10 +9,16 @@
                 <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
                     {{ btnSaveSettings.text }}
                 </button>
-                <button :class="btnSyncMatches.class" @click="markDfAsComplete(btnSyncMatches)">
+                <button :class="btnSyncMatches.class" @click="syncChanges(btnSyncMatches)">
                     {{ btnSyncMatches.text }}
                 </button>
             </div>
+            <button :class="btnSyncPage.class" @click="syncPage(btnSyncPage)">
+                {{ btnSyncPage.text }}
+            </button>
+            <button :class="btnSyncAll.class" @click="syncAll(btnSyncAll)">
+                {{ btnSyncAll.text }}
+            </button>
         </div>
 
         <!-- Navigation -->
@@ -122,9 +128,23 @@ export default {
             },
 
             btnSyncMatches: {
-                text: "Save dataset to file",
+                text: "Save changes to file",
                 class: "bg-green-500 text-white px-4 py-2 rounded",
-                origText: "Save dataset to file",
+                origText: "Save changes to file",
+                origClass: "bg-green-500 text-white px-4 py-2 rounded",
+            },
+
+            btnSyncPage: {
+                text: "Save this page to file",
+                class: "bg-green-500 text-white px-4 py-2 rounded",
+                origText: "Save this page to file",
+                origClass: "bg-green-500 text-white px-4 py-2 rounded",
+            },
+
+            btnSyncAll: {
+                text: "Save all pages to file",
+                class: "bg-green-500 text-white px-4 py-2 rounded",
+                origText: "Save all pages to file",
                 origClass: "bg-green-500 text-white px-4 py-2 rounded",
             },
         }
@@ -195,8 +215,21 @@ export default {
             return this.images[index].source_name !== this.images[index - 1].source_name;
         },
 
-        async markDfAsComplete(btnState) {
-            const apiUrl = '/api/mark_complete'
+        async syncChanges(btnState) {
+            const apiUrl = '/api/sync_changes'
+            await this.syncBtnHandler(apiUrl, {}, btnState)
+        },
+
+        async syncPage(btnState) {
+            const apiUrl = '/api/sync_page'
+            const data = {
+                page: this.currentPage,
+            }
+            await this.syncBtnHandler(apiUrl, data, btnState)
+        },
+
+        async syncAll(btnState) {
+            const apiUrl = '/api/sync_all'
             await this.syncBtnHandler(apiUrl, {}, btnState)
         },
 
