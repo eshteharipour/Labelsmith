@@ -74,7 +74,8 @@ async def save_data():
 
 @app.post("/api/sync_page")
 async def save_data_page(request: Request):
-    page = int(request.json()["page"])
+    page = await request.json()
+    page = int(page["page"])
     start_idx = page * PAGE_SIZE
     end_idx = start_idx + PAGE_SIZE
 
