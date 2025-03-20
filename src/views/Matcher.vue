@@ -54,13 +54,13 @@
                     </div>
                     <!-- Matching Controls -->
                     <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
-                        <div class="text-sm text-gray-600">Last evaluator</div>
-                        <div class="text-sm text-gray-600">{{ image.evaluator }}</div>
-                        <div v-if="image.response" class="text-sm text-gray-600">LLM response</div>
+                        <div v-if="image.evaluator" class="text-sm text-gray-600">Last evaluator</div>
+                        <div v-if="image.evaluator" class="text-sm text-gray-600">{{ image.evaluator }}</div>
+                        <div v-if="image.response" class="text-sm text-gray-600">Model response</div>
                         <div v-if="image.response" class="text-sm text-gray-600">{{ image.response }}</div>
-                        <div v-if="image.response2" class="text-sm text-gray-600">LLM 2 response</div>
+                        <div v-if="image.response2" class="text-sm text-gray-600">Model 2 response</div>
                         <div v-if="image.response2" class="text-sm text-gray-600">{{ image.response2 }}</div>
-                        <div class="text-sm text-gray-600">Match Status</div>
+                        <!-- <div class="text-sm text-gray-600">Match Status</div> -->
                         <div class="flex space-x-2">
                             <button @click="updateMatching(image, index, true)"
                                 class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === true
