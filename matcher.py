@@ -103,7 +103,7 @@ async def get_images(page: int = 0):
     # Save last_page on changing page
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
         state["settings"]["last_page"] = page
-        await save_json(page)
+        save_json(state_file, state)
 
     return {
         "images": page_data,

@@ -1,11 +1,12 @@
 import os
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from prod2vec.dataset.isee_viewer import read_dataset, save_json
+from prod2vec.dataset.isee_cluster import read_dataset, save_json
 
 app = FastAPI()
 
@@ -25,7 +26,7 @@ SAVE_LAST_PAGE_ON_PAGE_CHANGE = False
 
 # Load dataset
 print("Lading dataframe...")
-df, state, state_file, default_image = read_dataset()
+df, state_file, state, default_image, cluster_col = read_dataset()
 print("Finished loading dataframe.")
 
 
@@ -51,7 +52,14 @@ async def get_images(page: int = 0):
     page_data = df.iloc[start_idx:end_idx].reset_index().to_dict("records")
     total_pages = len(df) // PAGE_SIZE + (1 if len(df) % PAGE_SIZE > 0 else 0)
 
-    # Save last_page on changing page
+    for item in page_data:
+        if (
+            "cluster_id" not in item
+            or pd.isna(item["cluster_id"])
+            or int(item["cluster_id"]) < 0
+        ):
+            item["cluster_id"] = None
+
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
         state["settings"]["last_page"] = page
         save_json(state_file, state)
