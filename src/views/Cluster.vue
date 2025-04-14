@@ -9,6 +9,17 @@
                 <button :class="btnSaveSettings.class" @click="syncSettings(btnSaveSettings)">
                     {{ btnSaveSettings.text }}
                 </button>
+                <!-- Image Source Toggle -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium">Local</span>
+                    <button @click="toggleImageSource"
+                        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+                        :class="isServerMode ? 'bg-blue-600' : 'bg-gray-200'">
+                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                            :class="isServerMode ? 'translate-x-6' : 'translate-x-1'"></span>
+                    </button>
+                    <span class="text-sm font-medium">Server</span>
+                </div>
             </div>
         </div>
 
@@ -38,12 +49,10 @@
                     <div v-for="image in cluster" :key="image.id"
                         class="bg-white border rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
                         <div class="text-center">
-                            <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`"
-                                :alt="image.path" class="w-32 h-32 object-cover rounded-md mx-auto mb-2" />
+                            <img :src="getImageSrc(image)" :alt="image.name"
+                                class="w-32 h-32 object-cover rounded-md mx-auto mb-2" />
                             <div class="text-sm font-semibold truncate">{{ image.name }}</div>
                             <div class="text-xs text-gray-600 truncate">{{ image.path.split('/').slice(-1)[0] }}</div>
-                            <div class="mt-2 text-xs text-gray-500">
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -82,6 +91,7 @@ export default {
             currentPage: 0,
             pageNum: 0,
             pageNumError: '',
+            isServerMode: false,
 
             images: [],
             totalPages: 0,
@@ -121,9 +131,35 @@ export default {
             }
         },
 
+        // getImageSrc(image) {
+        //     if (this.isServerMode && image.path_id) {
+        //         // Use the path_id which is a web address for server mode
+        //         return image.path_id
+        //     } else {
+        //         // Use the local file path for local mode
+        //         return `/api/images/file?image_path=${encodeURIComponent(image.path)}`
+        //     }
+        // },
+
+        getImageSrc(image) {
+            if (this.isServerMode && image.path_id) {
+                // Use the proxy endpoint for external images
+                return `/api/proxy-image?url=${encodeURIComponent(image.path_id)}`;
+            } else {
+                // Local images remain the same
+                return `/api/images/file?image_path=${encodeURIComponent(image.path)}`;
+            }
+        },
+
+        toggleImageSource() {
+            this.isServerMode = !this.isServerMode
+            this.loadImages() // Reload images with the new source mode
+        },
+
         async loadSettings() {
             const response = await axios.get(`/api/load_settings`)
             if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
+            if (response.data.settings.isServerMode) this.isServerMode = response.data.settings.isServerMode
         },
 
         async handlePageNumSubmit(pageNum) {
@@ -149,6 +185,7 @@ export default {
             const apiUrl = '/api/save_settings'
             const data = {
                 lastPage: this.currentPage,
+                isServerMode: this.isServerMode
             }
             await this.syncBtnHandler(apiUrl, data, btnState)
         },
@@ -224,6 +261,7 @@ button {
     margin: 0 1px;
     padding: 1px;
 }
+
 .cluster-group {
     background-color: #f9fafb;
     padding: 1rem;

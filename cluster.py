@@ -1,7 +1,8 @@
 import os
 
+import httpx
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -85,6 +86,29 @@ async def get_image(image_path: str):
         return FileResponse(image_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/proxy-image")
+async def proxy_image(url: str):
+    if not url:
+        return FileResponse(default_image)
+
+    try:
+        # Use httpx for making the HTTP request
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            # Set a reasonable timeout
+            response = await client.get(url, timeout=10.0)
+
+            # Return the image with the same content type
+            return Response(
+                content=response.content,
+                media_type=response.headers.get("content-type", "image/jpeg"),
+                headers={
+                    "Cache-Control": "public, max-age=86400"  # Cache for 24 hours
+                },
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch image: {str(e)}")
 
 
 # Mount static files for frontend
