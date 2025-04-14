@@ -15,7 +15,15 @@ uvicorn cleaner.matcher:app --reload --workers 8
 uvicorn cleaner.viewer:app --reload --workers 8
 uvicorn cleaner.cluster:app --reload --workers 8
 
+# no need for the following, use npm run dev.
 npm run build && npm run preview
+
+
+# vite
+npm run dev
+# http://localhost:5173/
+
+# if you open http://localhost:8000/ routing worn't work correctly!
 ```
 
 Prompt:
