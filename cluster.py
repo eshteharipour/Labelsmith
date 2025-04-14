@@ -62,7 +62,7 @@ async def get_images(page: int = 0):
             item["cluster_id"] = None
 
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
-        state["settings"]["last_page"] = page
+        state["settings"]["lastPage"] = page
         save_json(state_file, state)
 
     return {

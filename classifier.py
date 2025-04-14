@@ -92,7 +92,7 @@ async def get_images(page: int = 0):
 
     # Save last_page on changing page
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
-        state["settings"]["last_page"] = page
+        state["settings"]["lastPage"] = page
         save_json(state_file, state)
 
     return MainResponse(
@@ -125,7 +125,7 @@ async def get_groups(page: int = 0):
 
     # Save last_page on changing page
     if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
-        state["settings"]["last_page"] = page
+        state["settings"]["lastPage"] = page
         save_json(state_file, state)
 
     return MainResponse(
