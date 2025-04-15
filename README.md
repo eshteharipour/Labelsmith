@@ -24,6 +24,9 @@ npm run dev
 # http://localhost:5173/
 
 # if you open http://localhost:8000/ routing worn't work correctly!
+
+# Run on server
+npx vite --host
 ```
 
 Prompt:
