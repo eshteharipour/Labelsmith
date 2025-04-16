@@ -12,6 +12,11 @@
                 <button :class="btnSyncMatches.class" @click="syncChanges(btnSyncMatches)">
                     {{ btnSyncMatches.text }}
                 </button>
+                <button class="px-4 py-2 rounded transition-colors"
+                    :class="showHighlights ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                    @click="toggleHighlights">
+                    {{ showHighlights ? 'Highlighting On' : 'Highlighting Off' }}
+                </button>
             </div>
             <button :class="btnSyncPage.class" @click="syncPage(btnSyncPage)">
                 {{ btnSyncPage.text }}
@@ -79,7 +84,8 @@
                     <!-- Target Section -->
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2"
-                            v-html="matchHighlighter(image.target_name, image.source_name)"></div>
+                            v-html="showHighlights ? matchHighlighter(image.target_name, image.source_name) : image.target_name">
+                        </div>
                         <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
                             :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
@@ -120,6 +126,7 @@ export default {
             currentPage: 0,
             pageNum: 0,
             pageNumError: '',
+            showHighlights: true,
 
             images: [],
             totalPages: 0,
@@ -155,6 +162,10 @@ export default {
     },
 
     methods: {
+        toggleHighlights() {
+            this.showHighlights = !this.showHighlights;
+        },
+
         async loadImages() {
             this.images = [] // Fixes duplicate products on changing page 
             // TODO: but spamming next/prev page makes vue not update anymore
@@ -169,8 +180,13 @@ export default {
         },
 
         async loadSettings() {
-            const response = await axios.get(`/api/load_settings`)
-            if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
+            try {
+                const response = await axios.get(`/api/load_settings`)
+                if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
+                if (response.data.settings.showHighlights) this.showHighlights = response.data.settings.showHighlights
+            } catch (error) {
+                console.error('Error loading settings:', error)
+            }
         },
 
         async updateMatching(image, index, match) {
@@ -241,6 +257,7 @@ export default {
             const apiUrl = '/api/save_settings'
             const data = {
                 lastPage: this.currentPage,
+                showHighlights: this.showHighlights,
             }
             await this.syncBtnHandler(apiUrl, data, btnState)
         },
