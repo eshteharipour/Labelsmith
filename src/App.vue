@@ -5,7 +5,8 @@
             <router-link to="/">Classifier</router-link> |
             <router-link to="/matcher">Matcher</router-link> |
             <router-link to="/viewer">Viewer</router-link> |
-            <router-link to="/cluster">Cluster</router-link>
+            <router-link to="/cluster">Cluster</router-link> |
+            <router-link to="/shop">Shop</router-link>
         </nav>
 
         <router-view></router-view>
