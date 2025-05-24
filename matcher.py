@@ -37,7 +37,9 @@ COLUMNS = ["source_name", "source_image", "target_name", "target_image", "matchi
 print("Lading dataframe...")
 DATASET = DatasetEnum(os.environ["dataset"].lower().strip())
 SHOW_REVIEWD = os.environ["show_reviewed"].lower().strip() == "true"
-df, state, state_file, default_image = read_dataset(DATASET, SHOW_REVIEWD)
+df, state, state_file, default_image = read_dataset(
+    DATASET, SHOW_REVIEWD, os.environ["show_matchings"]
+)
 result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
 print("Finished loading dataframe.")
 
