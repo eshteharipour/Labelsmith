@@ -184,7 +184,6 @@ export default {
 
         getImageSrc(url) {
             return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-            }
         },
 
         async updateRefPID(image) {
