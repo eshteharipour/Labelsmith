@@ -38,7 +38,7 @@ print("Lading dataframe...")
 DATASET = DatasetEnum(os.environ["dataset"].lower().strip())
 SHOW_REVIEWD = os.environ["show_reviewed"].lower().strip() == "true"
 df, state, state_file, default_image = read_dataset(
-    DATASET, SHOW_REVIEWD, os.environ["show_matchings"], os.environ["must_have_farsi"]
+    DATASET, SHOW_REVIEWD, os.environ["show_matchings"]
 )
 result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
 print("Finished loading dataframe.")
