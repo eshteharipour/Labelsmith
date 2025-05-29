@@ -54,6 +54,7 @@
                     <!-- Source Section -->
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.source_name }}</div>
+                        <div v-if="image.source_category" class="text-lg font-semibold mb-2">{{ image.source_category }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
                             :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
@@ -86,6 +87,7 @@
                         <div class="text-lg font-semibold mb-2"
                             v-html="showHighlights ? matchHighlighter(image.target_name, image.source_name) : image.target_name">
                         </div>
+                        <div v-if="image.target_category" class="text-lg font-semibold mb-2">{{ image.target_category }}</div>
                         <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
                             :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
