@@ -35,7 +35,7 @@
                 <!-- Image Card -->
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2">{{ image.name }}</div>
+                        <div class="text-lg font-semibold mb-2 farsi-text">{{ image.name }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.path"
                             class="w-48 h-48 object-cover rounded-lg border" />
                         <div v-if="image.path" class="text-sm truncate w-full text-gray-600">{{
@@ -201,6 +201,15 @@ export default {
 <style>
 button {
     transition: background-color 0.3s ease-in-out;
+}
+
+/* Farsi RTL styling */
+.farsi-text {
+    direction: rtl;
+    text-align: right;
+    unicode-bidi: bidi-override;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    line-height: 1.6;
 }
 </style>
 

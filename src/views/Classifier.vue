@@ -66,7 +66,7 @@
           <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
             class="w-full h-48 object-cover mb-2" />
         </div>
-        <div class="truncate" :title="image.name">{{ image.name }}</div>
+        <div class="truncate farsi-text" :title="image.name">{{ image.name }}</div>
         <div v-if="imageMode === true">
           <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
           <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
@@ -116,7 +116,7 @@
         <div v-if="imageMode === true">
         </div>
         <div class="flex-1 px-4">
-          <div class="font-bold">{{ image.name }}</div>
+          <div class="font-bold farsi-text">{{ image.name }}</div>
           <div v-if="imageMode === true">
             <div v-if="image.source" class="text-sm text-gray-600">Source: {{ image.source }}</div>
             <div v-if="image.site_id" class="text-sm text-gray-600">Site ID: {{ image.site_id }}</div>
@@ -385,6 +385,15 @@ export default {
 <style>
 button {
   transition: background-color 0.3s ease-in-out;
+}
+
+/* Farsi RTL styling */
+.farsi-text {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: bidi-override;
+  font-family: 'Tahoma', 'Arial', sans-serif;
+  line-height: 1.6;
 }
 </style>
 
