@@ -53,8 +53,9 @@
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
                     <!-- Source Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2">{{ image.source_name }}</div>
-                        <div v-if="image.source_category" class="text-lg font-semibold mb-2">{{ image.source_category }}</div>
+                        <div class="text-lg font-semibold mb-2 farsi-text">{{ image.source_name }}</div>
+                        <div v-if="image.source_category" class="text-lg font-semibold mb-2 farsi-text">{{
+                            image.source_category }}</div>
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
                             :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
                     </div>
@@ -84,10 +85,11 @@
                     </div>
                     <!-- Target Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2"
+                        <div class="text-lg font-semibold mb-2 farsi-text"
                             v-html="showHighlights ? matchHighlighter(image.target_name, image.source_name) : image.target_name">
                         </div>
-                        <div v-if="image.target_category" class="text-lg font-semibold mb-2">{{ image.target_category }}</div>
+                        <div v-if="image.target_category" class="text-lg font-semibold mb-2 farsi-text">{{
+                            image.target_category }}</div>
                         <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
                         <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
                             :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
@@ -333,6 +335,21 @@ button {
     /* or any color you prefer */
     padding: 2px 4px;
     border-radius: 3px;
+}
+
+/* Farsi RTL styling */
+.farsi-text {
+    direction: rtl;
+    text-align: right;
+    unicode-bidi: bidi-override;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    line-height: 1.6;
+}
+
+/* Ensure highlighted text within RTL context also follows RTL */
+.farsi-text .highlight {
+    direction: rtl;
+    unicode-bidi: bidi-override;
 }
 </style>
 
