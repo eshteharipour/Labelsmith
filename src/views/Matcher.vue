@@ -145,9 +145,9 @@ export default {
             totalPages: 0,
 
             btnSaveSettings: {
-                text: "Save",
+                text: "Save settings",
                 class: "bg-green-500 text-white px-4 py-2 rounded",
-                origText: "Save",
+                origText: "Save settings",
                 origClass: "bg-green-500 text-white px-4 py-2 rounded",
             },
 
