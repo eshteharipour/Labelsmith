@@ -17,6 +17,11 @@
                     @click="toggleHighlights">
                     {{ showHighlights ? 'Highlighting On' : 'Highlighting Off' }}
                 </button>
+                <button class="px-4 py-2 rounded transition-colors"
+                    :class="centeredLayout ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                    @click="changeLayout">
+                    {{ centeredLayout ? 'Centered layout' : 'Side layout' }}
+                </button>
             </div>
             <button :class="btnSyncPage.class" @click="syncPage(btnSyncPage)">
                 {{ btnSyncPage.text }}
@@ -49,51 +54,54 @@
                 <!-- <div v-if="shouldShowSeparator(index)" class="bg-gray-100 p-3 rounded-lg font-semibold"> -->
                 <div v-if="shouldShowSeparator(index)" class="separator">
                 </div>
-                <!-- Image Card -->
+                <!-- Dynamic Section Ordering -->
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
-                    <!-- Source Section -->
-                    <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2 farsi-text">{{ image.source_name }}</div>
-                        <div v-if="image.source_category" class="text-lg font-semibold mb-2 farsi-text">{{
-                            image.source_category }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
-                            :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
-                    </div>
-                    <!-- Matching Controls -->
-                    <div class="flex flex-col items-center justify-center w-1/4 space-y-4">
-                        <div v-if="image.evaluator" class="text-sm text-gray-600">Last evaluator</div>
-                        <div v-if="image.evaluator" class="text-sm text-gray-600">{{ image.evaluator }}</div>
-                        <div v-if="image.response" class="text-sm text-gray-600">Model response</div>
-                        <div v-if="image.response" class="text-sm text-gray-600">{{ image.response }}</div>
-                        <div v-if="image.response2" class="text-sm text-gray-600">Model 2 response</div>
-                        <div v-if="image.response2" class="text-sm text-gray-600">{{ image.response2 }}</div>
-                        <!-- <div class="text-sm text-gray-600">Match Status</div> -->
-                        <div class="flex space-x-2">
-                            <button @click="updateMatching(image, index, true)"
-                                class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === true
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
-                                Match
-                            </button>
-                            <button @click="updateMatching(image, index, false)"
-                                class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === false
-                                    ? 'bg-red-600 text-white hover:bg-red-700'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
-                                No Match
-                            </button>
+                    <template v-for="section in orderedSections" :key="section">
+                        <!-- Source Section -->
+                        <div v-if="section === 'source'" class="flex flex-col items-center w-1/3">
+                            <div class="text-lg font-semibold mb-2 farsi-text">{{ image.source_name }}</div>
+                            <div v-if="image.source_category" class="text-lg font-semibold mb-2 farsi-text">{{
+                                image.source_category }}</div>
+                            <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
+                                :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
                         </div>
-                    </div>
-                    <!-- Target Section -->
-                    <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2 farsi-text"
-                            v-html="showHighlights ? matchHighlighter(image.target_name, image.source_name) : image.target_name">
+                        <!-- Matching Controls -->
+                        <div v-else-if="section === 'controls'"
+                            class="flex flex-col items-center justify-center w-1/4 space-y-4">
+                            <div v-if="image.evaluator" class="text-sm text-gray-600">Last evaluator</div>
+                            <div v-if="image.evaluator" class="text-sm text-gray-600">{{ image.evaluator }}</div>
+                            <div v-if="image.response" class="text-sm text-gray-600">Model response</div>
+                            <div v-if="image.response" class="text-sm text-gray-600">{{ image.response }}</div>
+                            <div v-if="image.response2" class="text-sm text-gray-600">Model 2 response</div>
+                            <div v-if="image.response2" class="text-sm text-gray-600">{{ image.response2 }}</div>
+                            <!-- <div class="text-sm text-gray-600">Match Status</div> -->
+                            <div class="flex space-x-2">
+                                <button @click="updateMatching(image, index, true)"
+                                    class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === true
+                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
+                                    Match
+                                </button>
+                                <button @click="updateMatching(image, index, false)"
+                                    class="px-4 py-2 rounded-md font-medium transition-colors" :class="image.matching === false
+                                        ? 'bg-red-600 text-white hover:bg-red-700'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
+                                    No Match
+                                </button>
+                            </div>
                         </div>
-                        <div v-if="image.target_category" class="text-lg font-semibold mb-2 farsi-text">{{
-                            image.target_category }}</div>
-                        <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
-                            :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
-                    </div>
+                        <!-- Target Section -->
+                        <div v-else-if="section === 'target'" class="flex flex-col items-center w-1/3">
+                            <div class="text-lg font-semibold mb-2 farsi-text"
+                                v-html="showHighlights ? matchHighlighter(image.target_name, image.source_name) : image.target_name">
+                            </div>
+                            <div v-if="image.target_category" class="text-lg font-semibold mb-2 farsi-text">{{
+                                image.target_category }}</div>
+                            <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
+                            <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
+                                :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
+                        </div>
+                    </template>
                 </div>
             </template>
         </div>
@@ -131,6 +139,7 @@ export default {
             pageNum: 0,
             pageNumError: '',
             showHighlights: true,
+            centeredLayout: true,
 
             images: [],
             totalPages: 0,
@@ -165,9 +174,21 @@ export default {
         }
     },
 
+    computed: {
+        orderedSections() {
+            return this.centeredLayout
+                ? ['source', 'controls', 'target']
+                : ['source', 'target', 'controls'];
+        },
+    },
+
     methods: {
         toggleHighlights() {
             this.showHighlights = !this.showHighlights;
+        },
+
+        changeLayout() {
+            this.centeredLayout = !this.centeredLayout;
         },
 
         async loadImages() {
@@ -188,6 +209,7 @@ export default {
                 const response = await axios.get(`/api/load_settings`)
                 if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
                 if (response.data.settings.showHighlights) this.showHighlights = response.data.settings.showHighlights
+                if (response.data.settings.centeredLayout) this.centeredLayout = response.data.settings.centeredLayout
             } catch (error) {
                 console.error('Error loading settings:', error)
             }
@@ -262,6 +284,7 @@ export default {
             const data = {
                 lastPage: this.currentPage,
                 showHighlights: this.showHighlights,
+                centeredLayout: this.centeredLayout,
             }
             await this.syncBtnHandler(apiUrl, data, btnState)
         },
