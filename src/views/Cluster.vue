@@ -51,7 +51,7 @@
                         <div class="text-center">
                             <img :src="getImageSrc(image)" :alt="image.name"
                                 class="w-32 h-32 object-cover rounded-md mx-auto mb-2" />
-                            <div class="text-sm font-semibold farsi-text">{{ image.name }}</div>
+                            <div class="text-sm font-semibold truncate">{{ image.name }}</div>
                             <div class="text-xs text-gray-600 truncate">{{ image.path.split('/').slice(-1)[0] }}</div>
                         </div>
                     </div>
@@ -236,15 +236,6 @@ export default {
 <style>
 button {
     transition: background-color 0.3s ease-in-out;
-}
-
-/* Farsi RTL styling */
-.farsi-text {
-    direction: rtl;
-    text-align: right;
-    unicode-bidi: bidi-override;
-    font-family: 'Tahoma', 'Arial', sans-serif;
-    line-height: 1.6;
 }
 </style>
 

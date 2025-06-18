@@ -50,13 +50,13 @@
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
                     <!-- Source Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2 farsi-text">{{ image.cp_name }}</div>
+                        <div class="text-lg font-semibold mb-2">{{ image.cp_name }}</div>
                         <img :src="getImageSrc(image.cp_image)" :alt="image.cp_image"
                             class="w-32 h-32 object-cover rounded-md mx-auto mb-2" />
                     </div>
                     <!-- Target Section -->
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2 farsi-text"
+                        <div class="text-lg font-semibold mb-2"
                             v-html="showHighlights ? matchHighlighter(image.ref_name, image.cp_name) : image.ref_name">
                         </div>
                         <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
@@ -64,7 +64,7 @@
                             class="w-32 h-32 object-cover rounded-md mx-auto mb-2" />
                     </div>
                     <div class="flex flex-col items-center w-1/3">
-                        <div class="text-lg font-semibold mb-2 farsi-text"
+                        <div class="text-lg font-semibold mb-2"
                             v-html="showHighlights ? matchHighlighter(image.recom_ref_name, image.cp_name) : image.recom_ref_name">
                         </div>
                         <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
@@ -298,21 +298,6 @@ button {
     /* or any color you prefer */
     padding: 2px 4px;
     border-radius: 3px;
-}
-
-/* Farsi RTL styling */
-.farsi-text {
-    direction: rtl;
-    text-align: right;
-    unicode-bidi: bidi-override;
-    font-family: 'Tahoma', 'Arial', sans-serif;
-    line-height: 1.6;
-}
-
-/* Ensure highlighted text within RTL context also follows RTL */
-.farsi-text .highlight {
-    direction: rtl;
-    unicode-bidi: bidi-override;
 }
 </style>
 
