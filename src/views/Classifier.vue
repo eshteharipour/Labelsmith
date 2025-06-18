@@ -252,10 +252,10 @@ export default {
 
     async loadSettings() {
       const response = await axios.get(`/api/load_settings`)
-      if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
-      if (response.data.settings.pageMode) this.pageMode = response.data.settings.pageMode
-      if (response.data.settings.imageMode) this.imageMode = response.data.settings.imageMode
-      if (response.data.settings.viewMode) this.viewMode = response.data.settings.viewMode
+      if (response.data.settings.lastPage !== undefined) this.currentPage = response.data.settings.lastPage
+      if (response.data.settings.pageMode !== undefined) this.pageMode = response.data.settings.pageMode
+      if (response.data.settings.imageMode !== undefined) this.imageMode = response.data.settings.imageMode
+      if (response.data.settings.viewMode !== undefined) this.viewMode = response.data.settings.viewMode
     },
 
     async changeStatus(image, status) {

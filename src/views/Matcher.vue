@@ -245,9 +245,9 @@ export default {
         async loadSettings() {
             try {
                 const response = await axios.get(`/api/load_settings`)
-                if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
-                if (response.data.settings.showHighlights) this.showHighlights = response.data.settings.showHighlights
-                if (response.data.settings.centeredLayout) this.centeredLayout = response.data.settings.centeredLayout
+                if (response.data.settings.lastPage !== undefined) this.currentPage = response.data.settings.lastPage
+                if (response.data.settings.showHighlights !== undefined) this.showHighlights = response.data.settings.showHighlights
+                if (response.data.settings.centeredLayout !== undefined) this.centeredLayout = response.data.settings.centeredLayout
             } catch (error) {
                 console.error('Error loading settings:', error)
             }

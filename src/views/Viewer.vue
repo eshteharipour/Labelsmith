@@ -125,7 +125,7 @@ export default {
 
         async loadSettings() {
             const response = await axios.get(`/api/load_settings`)
-            if (response.data.settings.lastPage) this.currentPage = response.data.settings.lastPage
+            if (response.data.settings.lastPage !== undefined) this.currentPage = response.data.settings.lastPage
         },
 
         async handlePageNumSubmit(pageNum) {
