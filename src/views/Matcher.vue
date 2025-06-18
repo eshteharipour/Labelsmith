@@ -394,7 +394,7 @@ button {
 
 .rtl-text {
     direction: rtl;
-    text-align: right;
+    text-align: center;
     unicode-bidi: embed;
     font-family: 'Tahoma', 'Arial', sans-serif;
     line-height: 1.6;
@@ -402,7 +402,7 @@ button {
 
 .ltr-text {
     direction: ltr;
-    text-align: left;
+    text-align: center;
     unicode-bidi: embed;
     font-family: 'Tahoma', 'Arial', sans-serif;
     line-height: 1.6;
