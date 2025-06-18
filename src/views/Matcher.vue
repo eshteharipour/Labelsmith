@@ -47,6 +47,21 @@
             <!-- <button @click="handlePageNumSubmit(pageNum)" class="submit-button"> -->
         </div>
 
+
+        <!-- Text Dir Test -->
+        <!-- <div class="text-lg font-semibold mb-2" :class="getTextDirectionClass('eng1 lish1 فا رسی eng2 lishhhhhhhhh2')">
+            'eng1 lish1 فا رسی eng2 lishhhhhhhhh2'
+        </div>
+        <div class="text-lg font-semibold mb-2" :class="getTextDirectionClass('فا1 eng lishhhhhhhhhhhh رسی2')">
+            'فا1 eng lishhhhhhhhhhhh رسی2'
+        </div>
+        <div class="text-lg font-semibold mb-2" :class="getTextDirectionClass('ترانزیستور قدرت 2n3055 60v 15a')">
+            'ترانزیستور قدرت 2n3055 60v 15a'
+        </div>
+        <div class="text-lg font-semibold mb-2" :class="getTextDirectionClass('2n3055 معمولی')">
+            '2n3055 معمولی'
+        </div> -->
+
         <!-- Row View -->
         <div class="space-y-6">
             <!-- Separator -->
@@ -59,9 +74,13 @@
                     <template v-for="section in orderedSections" :key="section">
                         <!-- Source Section -->
                         <div v-if="section === 'source'" class="flex flex-col items-center w-1/3">
-                            <div class="text-lg font-semibold mb-2 farsi-text">{{ image.source_name }}</div>
-                            <div v-if="image.source_category" class="text-lg font-semibold mb-2 farsi-text">{{
-                                image.source_category }}</div>
+                            <div class="text-lg font-semibold mb-2" :class="getTextDirectionClass(image.source_name)">
+                                {{ image.source_name }}
+                            </div>
+                            <div v-if="image.source_category" class="text-lg font-semibold mb-2"
+                                :class="getTextDirectionClass(image.source_category)">
+                                {{ image.source_category }}
+                            </div>
                             <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
                                 :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
                         </div>
@@ -92,11 +111,13 @@
                         </div>
                         <!-- Target Section -->
                         <div v-else-if="section === 'target'" class="flex flex-col items-center w-1/3">
-                            <div class="text-lg font-semibold mb-2 farsi-text"
+                            <div class="text-lg font-semibold mb-2" :class="getTextDirectionClass(image.target_name)"
                                 v-html="showHighlights ? matchHighlighter(image.target_name, image.source_name) : image.target_name">
                             </div>
-                            <div v-if="image.target_category" class="text-lg font-semibold mb-2 farsi-text">{{
-                                image.target_category }}</div>
+                            <div v-if="image.target_category" class="text-lg font-semibold mb-2"
+                                :class="getTextDirectionClass(image.target_category)">
+                                {{ image.target_category }}
+                            </div>
                             <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
                             <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
                                 :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
@@ -183,6 +204,23 @@ export default {
     },
 
     methods: {
+        startsWithPersian(text) {
+            if (!text) return false;
+
+            // Persian/Farsi Unicode ranges
+            const persianRange = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+            return persianRange.test(text);
+        },
+
+        getTextDirectionClass(text) {
+            if (this.startsWithPersian(text)) {
+                return 'rtl-text';
+            } else {
+                return 'ltr-text';
+            }
+        },
+
         toggleHighlights() {
             this.showHighlights = !this.showHighlights;
         },
@@ -336,6 +374,7 @@ export default {
 
             return text.replace(pattern, '<span class="highlight">$1</span>');
         },
+
         escapeRegExp(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         },
@@ -353,26 +392,30 @@ button {
     transition: background-color 0.3s ease-in-out;
 }
 
-.highlight {
-    background-color: yellow;
-    /* or any color you prefer */
-    padding: 2px 4px;
-    border-radius: 3px;
-}
-
-/* Farsi RTL styling */
-.farsi-text {
+.rtl-text {
     direction: rtl;
     text-align: right;
-    unicode-bidi: bidi-override;
+    unicode-bidi: embed;
     font-family: 'Tahoma', 'Arial', sans-serif;
     line-height: 1.6;
 }
 
-/* Ensure highlighted text within RTL context also follows RTL */
-.farsi-text .highlight {
-    direction: rtl;
-    unicode-bidi: bidi-override;
+.ltr-text {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: embed;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    line-height: 1.6;
+    /* Let browser handle bidirectional text naturally */
+    /* unicode-bidi: plaintext; */
+}
+
+.rtl-text .highlight,
+.ltr-text .highlight {
+    background-color: yellow;
+    padding: 2px 4px;
+    border-radius: 3px;
+    /* unicode-bidi: inherit; */
 }
 </style>
 
