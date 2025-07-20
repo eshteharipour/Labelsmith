@@ -4,8 +4,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-
-from prod2vec.dataset.isee_viewer import read_dataset, save_json
+from prod2vec.dataset.isee_viewer import read_dataset, save_dataset, save_json
 
 app = FastAPI()
 
@@ -40,6 +39,19 @@ async def save_page(request: Request):
     state["settings"] = data
     save_json(state_file, state)
 
+    return {"success": True}
+
+
+@app.post("/api/sync_page")
+async def save_data_page(request: Request):
+    page = await request.json()
+    page = int(page["page"])
+    start_idx = page * PAGE_SIZE
+    end_idx = start_idx + PAGE_SIZE
+
+    page_data = df.iloc[start_idx:end_idx].reset_index()
+
+    save_dataset(page_data)
     return {"success": True}
 
 

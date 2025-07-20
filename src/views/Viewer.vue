@@ -10,6 +10,9 @@
                     {{ btnSaveSettings.text }}
                 </button>
             </div>
+            <button :class="btnSyncPage.class" @click="syncPage(btnSyncPage)">
+                {{ btnSyncPage.text }}
+            </button>
         </div>
 
         <!-- Navigation -->
@@ -106,6 +109,13 @@ export default {
                 origText: "Save settings",
                 origClass: "bg-green-500 text-white px-4 py-2 rounded",
             },
+
+            btnSyncPage: {
+                text: "Save this page to file",
+                class: "bg-green-500 text-white px-4 py-2 rounded",
+                origText: "Save this page to file",
+                origClass: "bg-green-500 text-white px-4 py-2 rounded",
+            },
         }
     },
 
@@ -145,6 +155,14 @@ export default {
                 this.currentPage++
                 await this.loadImages()
             }
+        },
+
+        async syncPage(btnState) {
+            const apiUrl = '/api/sync_page'
+            const data = {
+                page: this.currentPage,
+            }
+            await this.syncBtnHandler(apiUrl, data, btnState)
         },
 
         async syncSettings(btnState) {
