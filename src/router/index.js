@@ -4,6 +4,7 @@ import Matcher from "@/views/Matcher.vue";
 import Viewer from "@/views/Viewer.vue";
 import Cluster from "@/views/Cluster.vue";
 import Shop from "@/views/Shop.vue";
+import TextLabeler from "@/views/TextLabeler.vue";
 
 const routes = [
   { path: "/", component: Classifier },
@@ -11,6 +12,7 @@ const routes = [
   { path: "/viewer", component: Viewer },
   { path: "/cluster", component: Cluster },
   { path: "/shop", component: Shop },
+  { path: "/labeler", component: TextLabeler },
 ];
 
 const router = createRouter({
