@@ -122,7 +122,7 @@ export default {
             this.images = [] // Fixes duplicate products on changing page 
             // TODO: but spamming next/prev page makes vue not update anymore
             try {
-                const response = await axios.get(`/api/images?page=${this.currentPage}`)
+                const response = await axios.get(`/api/cluster/images?page=${this.currentPage}`)
 
                 this.images = response.data.images
                 this.totalPages = response.data.total_pages
@@ -137,17 +137,17 @@ export default {
         //         return image.path_id
         //     } else {
         //         // Use the local file path for local mode
-        //         return `/api/images/file?image_path=${encodeURIComponent(image.path)}`
+        //         return `/api/cluster/images/file?image_path=${encodeURIComponent(image.path)}`
         //     }
         // },
 
         getImageSrc(image) {
             if (this.isServerMode && image.path_id) {
                 // Use the proxy endpoint for external images
-                return `/api/proxy-image?url=${encodeURIComponent(image.path_id)}`;
+                return `/api/cluster/proxy-image?url=${encodeURIComponent(image.path_id)}`;
             } else {
                 // Local images remain the same
-                return `/api/images/file?image_path=${encodeURIComponent(image.path)}`;
+                return `/api/cluster/images/file?image_path=${encodeURIComponent(image.path)}`;
             }
         },
 
@@ -182,7 +182,7 @@ export default {
         },
 
         async syncSettings(btnState) {
-            const apiUrl = '/api/save_settings'
+            const apiUrl = '/api/cluster/save_settings'
             const data = {
                 lastPage: this.currentPage,
                 isServerMode: this.isServerMode

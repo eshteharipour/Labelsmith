@@ -63,7 +63,7 @@
     <div v-if="viewMode === 'grid'" class="grid grid-cols-4 gap-4">
       <div v-for="(image, index) in images" :key="image.id" class="border rounded p-4">
         <div v-if="imageMode === true">
-          <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
+          <img :src="`/api/classifier/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
             class="w-full h-48 object-cover mb-2" />
         </div>
         <div class="truncate" :title="image.name">{{ image.name }}</div>
@@ -110,7 +110,7 @@
     <div v-else class="space-y-4">
       <div v-for="(image, index) in images" :key="image.id" class="flex items-center border rounded p-4">
         <div v-if="imageMode === true">
-          <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
+          <img :src="`/api/classifier/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.name"
             class="w-48 h-48 object-cover" />
         </div>
         <div v-if="imageMode === true">
@@ -230,7 +230,7 @@ export default {
       try {
         let response
         if (this.pageMode === 'paginate') {
-          response = await axios.get(`/api/images?page=${this.currentPage}`)
+          response = await axios.get(`/api/classifier/images?page=${this.currentPage}`)
         }
         else if (this.pageMode === 'groups') {
           response = await axios.get(`/api/groups?page=${this.currentPage}`)
@@ -260,7 +260,7 @@ export default {
 
     async changeStatus(image, status) {
       try {
-        await axios.post('/api/images/update', {
+        await axios.post('/api/classifier/images/update', {
           path: image.path,
           status
         })
@@ -302,7 +302,7 @@ export default {
     },
 
     async syncSettings(btnState) {
-      const apiUrl = '/api/save_settings'
+      const apiUrl = '/api/classifier/save_settings'
       const data = {
         lastPage: this.currentPage,
         pageMode: this.pageMode,
@@ -313,7 +313,7 @@ export default {
     },
 
     async syncClassifications(btnState) {
-      const apiUrl = '/api/sync_classifications'
+      const apiUrl = '/api/classifier/sync_classifications'
       const data = {}
       await this.syncBtnHandler(apiUrl, data, btnState)
     },
@@ -363,7 +363,7 @@ export default {
     showSelected: {
       async handler(val) {
         if (val) {
-          const response = await axios.get('/api/images/selected')
+          const response = await axios.get('/api/classifier/images/selected')
           this.basename2status = this.createBasename2Status(response.data.images, this.selectedImages)
           this.images = response.data.images
         } else {

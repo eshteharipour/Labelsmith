@@ -163,7 +163,7 @@ export default {
             this.images = [] // Fixes duplicate products on changing page 
             // TODO: but spamming next/prev page makes vue not update anymore
             try {
-                const response = await axios.get(`/api/images?page=${this.currentPage}`)
+                const response = await axios.get(`/api/shop/images?page=${this.currentPage}`)
 
                 this.images = response.data.images
                 this.totalPages = response.data.total_pages
@@ -183,12 +183,12 @@ export default {
         },
 
         getImageSrc(url) {
-            return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+            return `/api/shop/proxy-image?url=${encodeURIComponent(url)}`;
         },
 
         async updateRefPID(image) {
             try {
-                const response = await axios.post('/api/images/update', {
+                const response = await axios.post('/api/shop/images/update', {
                     id: image.id,
                     ref_pid: image.recom_ref_pid,
                 })
@@ -221,7 +221,7 @@ export default {
 
 
         async syncSettings(btnState) {
-            const apiUrl = '/api/save_settings'
+            const apiUrl = '/api/shop/save_settings'
             const data = {
                 lastPage: this.currentPage,
                 showHighlights: this.showHighlights,

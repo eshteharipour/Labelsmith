@@ -39,7 +39,7 @@
                 <div class="flex items-center justify-between border rounded-lg p-6 bg-white shadow-sm">
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.name }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.path"
+                        <img :src="`/api/viewer/images/file?image_path=${encodeURIComponent(image.path)}`" :alt="image.path"
                             class="w-48 h-48 object-cover rounded-lg border" />
                         <div v-if="image.path" class="text-sm truncate w-full text-gray-600">{{
                             image.path.split('/').slice(-1).join() }}
@@ -47,7 +47,7 @@
                     </div>
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.rn18_l2_d }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.rn18_l2)}`"
+                        <img :src="`/api/viewer/images/file?image_path=${encodeURIComponent(image.rn18_l2)}`"
                             :alt="image.rn18_l2" class="w-48 h-48 object-cover rounded-lg border" />
                         <div v-if="image.rn18_l2" class="text-sm truncate w-full text-gray-600">{{
                             image.rn18_l2.split('/').slice(-1).join()
@@ -56,7 +56,7 @@
                     </div>
                     <div class="flex flex-col items-center w-1/3">
                         <div class="text-lg font-semibold mb-2">{{ image.rn18_ip_d }}</div>
-                        <img :src="`/api/images/file?image_path=${encodeURIComponent(image.rn18_ip)}`"
+                        <img :src="`/api/viewer/images/file?image_path=${encodeURIComponent(image.rn18_ip)}`"
                             :alt="image.rn18_ip" class="w-48 h-48 object-cover rounded-lg border" />
                         <div v-if="image.rn18_ip" class="text-sm truncate w-full text-gray-600">{{
                             image.rn18_ip.split('/').slice(-1).join()
@@ -124,7 +124,7 @@ export default {
             this.images = [] // Fixes duplicate products on changing page 
             // TODO: but spamming next/prev page makes vue not update anymore
             try {
-                const response = await axios.get(`/api/images?page=${this.currentPage}`)
+                const response = await axios.get(`/api/viewer/images?page=${this.currentPage}`)
 
                 this.images = response.data.images
                 this.totalPages = response.data.total_pages
@@ -158,7 +158,7 @@ export default {
         },
 
         async syncPage(btnState) {
-            const apiUrl = '/api/sync_page'
+            const apiUrl = '/api/viewer/sync_page'
             const data = {
                 page: this.currentPage,
             }
@@ -166,7 +166,7 @@ export default {
         },
 
         async syncSettings(btnState) {
-            const apiUrl = '/api/save_settings'
+            const apiUrl = '/api/viewer/save_settings'
             const data = {
                 lastPage: this.currentPage,
             }

@@ -81,7 +81,7 @@
                                 :class="getTextDirectionClass(image.source_category)">
                                 {{ image.source_category }}
                             </div>
-                            <img :src="`/api/images/file?image_path=${encodeURIComponent(image.source_image)}`"
+                            <img :src="`/api/matcher/images/file?image_path=${encodeURIComponent(image.source_image)}`"
                                 :alt="image.source_image" class="w-48 h-48 object-cover rounded-lg border" />
                         </div>
                         <!-- Matching Controls -->
@@ -119,7 +119,7 @@
                                 {{ image.target_category }}
                             </div>
                             <!-- <div class="text-lg font-semibold mb-2">{{ image.target_name }}</div> -->
-                            <img :src="`/api/images/file?image_path=${encodeURIComponent(image.target_image)}`"
+                            <img :src="`/api/matcher/images/file?image_path=${encodeURIComponent(image.target_image)}`"
                                 :alt="image.target_image" class="w-48 h-48 object-cover rounded-lg border" />
                         </div>
                     </template>
@@ -233,7 +233,7 @@ export default {
             this.images = [] // Fixes duplicate products on changing page 
             // TODO: but spamming next/prev page makes vue not update anymore
             try {
-                const response = await axios.get(`/api/images?page=${this.currentPage}`)
+                const response = await axios.get(`/api/matcher/images?page=${this.currentPage}`)
 
                 this.images = response.data.images
                 this.totalPages = response.data.total_pages
@@ -255,7 +255,7 @@ export default {
 
         async updateMatching(image, index, match) {
             try {
-                const response = await axios.post('/api/images/update', {
+                const response = await axios.post('/api/matcher/images/update', {
                     id: image.id,
                     source_name: image.source_name,
                     source_image: image.source_image,
@@ -300,12 +300,12 @@ export default {
         },
 
         async syncChanges(btnState) {
-            const apiUrl = '/api/sync_changes'
+            const apiUrl = '/api/matcher/sync_changes'
             await this.syncBtnHandler(apiUrl, {}, btnState)
         },
 
         async syncPage(btnState) {
-            const apiUrl = '/api/sync_page'
+            const apiUrl = '/api/matcher/sync_page'
             const data = {
                 page: this.currentPage,
             }
@@ -313,12 +313,12 @@ export default {
         },
 
         async syncAll(btnState) {
-            const apiUrl = '/api/sync_all'
+            const apiUrl = '/api/matcher/sync_all'
             await this.syncBtnHandler(apiUrl, {}, btnState)
         },
 
         async syncSettings(btnState) {
-            const apiUrl = '/api/save_settings'
+            const apiUrl = '/api/matcher/save_settings'
             const data = {
                 lastPage: this.currentPage,
                 showHighlights: this.showHighlights,

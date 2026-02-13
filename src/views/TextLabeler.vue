@@ -116,7 +116,7 @@ export default {
             this.images = []
             try {
                 // Assuming backend serves JSONL lines as a list of objects
-                const response = await axios.get(`/api/images?page=${this.currentPage}`)
+                const response = await axios.get(`/api/labeler/images?page=${this.currentPage}`)
 
                 // Add internal status tracker for UI feedback
                 this.images = response.data.images.map(img => ({
@@ -139,14 +139,14 @@ export default {
         },
 
         getImageSrc(path) {
-            return `/api/images/file?image_path=${encodeURIComponent(path)}`;
+            return `/api/labeler/images/file?image_path=${encodeURIComponent(path)}`;
         },
 
         // Save a single item when Enter is pressed
         async saveTextItem(item) {
             item._status = 'saving';
             try {
-                const response = await axios.post('/api/images/update', {
+                const response = await axios.post('/api/labeler/images/update', {
                     path: item.image, // Identify by image path
                     text: item.text   // The new text label
                 });
@@ -188,13 +188,13 @@ export default {
 
         // Sync functions (Reused logic)
         async syncPage(btnState) {
-            const apiUrl = '/api/sync_page' // Or specific endpoint for batch text save
+            const apiUrl = '/api/labeler/sync_page' // Or specific endpoint for batch text save
             const data = { page: this.currentPage }
             await this.syncBtnHandler(apiUrl, data, btnState)
         },
 
         async syncSettings(btnState) {
-            const apiUrl = '/api/save_settings'
+            const apiUrl = '/api/labeler/save_settings'
             const data = { lastPage: this.currentPage }
             await this.syncBtnHandler(apiUrl, data, btnState)
         },

@@ -312,3 +312,4 @@ cython_debug/
 .pypirc
 
 
+.vscode/
