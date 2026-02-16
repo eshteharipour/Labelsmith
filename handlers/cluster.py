@@ -11,16 +11,9 @@ import httpx
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse
-from utils import get_default_image_path, load_json, save_json
 
-# Only import if the module exists
-try:
-    from prod2vec.dataset.isee_cluster import read_dataset
-
-    CLUSTER_AVAILABLE = True
-except ImportError:
-    CLUSTER_AVAILABLE = False
-    print("Warning: prod2vec.dataset.isee_cluster not available")
+from dataset import cluster
+from dataset.settings import LCSCIseeCLip, LIPDataset, get_default_image
 
 router = APIRouter()
 
@@ -33,7 +26,7 @@ SAVE_LAST_PAGE_ON_PAGE_CHANGE = (
 # Global state
 _df = None
 _state: Dict[str, Any] = {"settings": {}}
-_state_file = "state_cluster.json"
+_state_file = None
 _default_image = None
 _cluster_col = None
 
@@ -42,20 +35,13 @@ def init_cluster():
     """Initialize the cluster viewer by loading datasets."""
     global _df, _state, _state_file, _default_image, _cluster_col
 
-    if not CLUSTER_AVAILABLE:
-        print("Cluster module not available - using dummy data")
-        _state = load_json(_state_file, {"settings": {}})
-        _default_image = get_default_image_path()
-        return
-
     print("Loading cluster dataset...")
-    _df, _state_file, _state, _default_image, _cluster_col = read_dataset()
+    _df, _state_file, _state, _default_image, _cluster_col = cluster.read_dataset()
     print(f"Loaded {len(_df)} images in clusters")
 
 
-# Initialize on module load if this router is used
-if CLUSTER_AVAILABLE:
-    init_cluster()
+# Initialize on module load
+init_cluster()
 
 
 @router.get("/load_settings")
@@ -67,6 +53,8 @@ async def load_settings():
 @router.post("/save_settings")
 async def save_settings(request: Request):
     """Save user settings to state."""
+    from dataset.core import save_json
+
     data = await request.json()
     _state["settings"] = data
     save_json(_state_file, _state)
@@ -76,12 +64,7 @@ async def save_settings(request: Request):
 @router.get("/images")
 async def get_images(page: int = 0):
     """Get paginated clustered images."""
-    if not CLUSTER_AVAILABLE or _df is None:
-        return {
-            "images": [],
-            "total_pages": 0,
-            "current_page": 0,
-        }
+    from dataset.core import save_json
 
     start_idx = page * PAGE_SIZE
     end_idx = start_idx + PAGE_SIZE
@@ -113,7 +96,7 @@ async def get_images(page: int = 0):
 async def get_image_file(image_path: str):
     """Serve a local image file."""
     if not image_path:
-        return FileResponse(_default_image or get_default_image_path())
+        return FileResponse(_default_image)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail=f"Image not found: {image_path}")
@@ -133,7 +116,7 @@ async def proxy_image(url: str):
     while avoiding CORS issues.
     """
     if not url:
-        return FileResponse(_default_image or get_default_image_path())
+        return FileResponse(_default_image)
 
     try:
         async with httpx.AsyncClient(follow_redirects=True) as client:

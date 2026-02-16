@@ -9,16 +9,9 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
-from utils import get_default_image_path, load_json, save_json
 
-# Only import if the module exists
-try:
-    from prod2vec.dataset.isee_viewer import read_dataset, save_dataset
-
-    VIEWER_AVAILABLE = True
-except ImportError:
-    VIEWER_AVAILABLE = False
-    print("Warning: prod2vec.dataset.isee_viewer not available")
+from dataset import viewer
+from dataset.settings import LCSCIseeCLip, LIPDataset, get_default_image, save_csv
 
 router = APIRouter()
 
@@ -31,7 +24,7 @@ SAVE_LAST_PAGE_ON_PAGE_CHANGE = (
 # Global state
 _df = None
 _state: Dict[str, Any] = {"settings": {}}
-_state_file = "state_viewer.json"
+_state_file = None
 _default_image = None
 
 
@@ -39,20 +32,13 @@ def init_viewer():
     """Initialize the viewer by loading datasets."""
     global _df, _state, _state_file, _default_image
 
-    if not VIEWER_AVAILABLE:
-        print("Viewer module not available - using dummy data")
-        _state = load_json(_state_file, {"settings": {}})
-        _default_image = get_default_image_path()
-        return
-
     print("Loading viewer dataset...")
-    _df, _state, _state_file, _default_image = read_dataset()
+    _df, _state, _state_file, _default_image = viewer.read_dataset()
     print(f"Loaded {len(_df)} images for viewing")
 
 
-# Initialize on module load if this router is used
-if VIEWER_AVAILABLE:
-    init_viewer()
+# Initialize on module load
+init_viewer()
 
 
 @router.get("/load_settings")
@@ -64,6 +50,8 @@ async def load_settings():
 @router.post("/save_settings")
 async def save_settings(request: Request):
     """Save user settings to state."""
+    from dataset.core import save_json
+
     data = await request.json()
     _state["settings"] = data
     save_json(_state_file, _state)
@@ -73,9 +61,6 @@ async def save_settings(request: Request):
 @router.post("/sync_page")
 async def sync_page(request: Request):
     """Save current page to file."""
-    if not VIEWER_AVAILABLE or _df is None:
-        return {"success": False, "error": "Viewer not available"}
-
     data = await request.json()
     page = int(data["page"])
     start_idx = page * PAGE_SIZE
@@ -84,7 +69,7 @@ async def sync_page(request: Request):
     page_data = _df.iloc[start_idx:end_idx].reset_index()
 
     try:
-        save_dataset(page_data)
+        viewer.save_dataset(page_data)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -93,12 +78,7 @@ async def sync_page(request: Request):
 @router.get("/images")
 async def get_images(page: int = 0):
     """Get paginated images with similarity data."""
-    if not VIEWER_AVAILABLE or _df is None:
-        return {
-            "images": [],
-            "total_pages": 0,
-            "current_page": 0,
-        }
+    from dataset.core import save_json
 
     start_idx = page * PAGE_SIZE
     end_idx = start_idx + PAGE_SIZE
@@ -121,7 +101,7 @@ async def get_images(page: int = 0):
 async def get_image_file(image_path: str):
     """Serve an image file."""
     if not image_path:
-        return FileResponse(_default_image or get_default_image_path())
+        return FileResponse(_default_image)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail=f"Image not found: {image_path}")

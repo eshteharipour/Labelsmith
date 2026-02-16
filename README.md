@@ -1,4 +1,4 @@
-# Image Dataset Management System
+# 🏗️ Labelsmith
 
 A unified, modular web application for managing, labeling, and organizing image datasets. This system provides multiple specialized views for different dataset management tasks.
 

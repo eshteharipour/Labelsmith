@@ -10,16 +10,11 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from utils import get_default_image_path, load_json, save_json
 
-# Only import if the module exists
-try:
-    from prod2vec.dataset.isee_classifier import read_dataset, save_text_dumps
+from dataset import classifier
+from dataset.settings import LCSCIseeCLip, LIPDataset, get_default_image
 
-    CLASSIFIER_AVAILABLE = True
-except ImportError:
-    CLASSIFIER_AVAILABLE = False
-    print("Warning: prod2vec.dataset.isee_classifier not available")
+CLASSIFIER_AVAILABLE = True
 
 router = APIRouter()
 
@@ -47,13 +42,6 @@ def init_classifier():
     """Initialize the classifier by loading datasets."""
     global _fltr_df, _clf_dict, _orig_dict, _state_file, _state, _default_image, _statuses, _cluster_col
 
-    if not CLASSIFIER_AVAILABLE:
-        print("Classifier module not available - using dummy data")
-        _state = {"settings": {}, "selected_images": {}}
-        _default_image = get_default_image_path()
-        _statuses = []
-        return
-
     print("Loading classifier dataset...")
     (
         _fltr_df,
@@ -64,13 +52,12 @@ def init_classifier():
         _default_image,
         _statuses,
         _cluster_col,
-    ) = read_dataset()
+    ) = classifier.read_dataset()
     print(f"Loaded {len(_fltr_df)} images for classification")
 
 
-# Initialize on module load if this router is used
-if CLASSIFIER_AVAILABLE:
-    init_classifier()
+# Initialize on module load
+init_classifier()
 
 
 class ImageUpdate(BaseModel):
@@ -99,31 +86,28 @@ async def load_settings():
 @router.post("/save_settings")
 async def save_settings(request: Request):
     """Save user settings to state."""
+    from dataset.core import save_json
+
     data = await request.json()
     _state["settings"] = data
-    if _state_file:
-        save_json(_state_file, _state)
+    save_json(_state_file, _state)
     return {"success": True}
 
 
 @router.post("/sync_classifications")
 async def sync_classifications():
     """Sync classifications to disk."""
-    if not CLASSIFIER_AVAILABLE or not _state_file:
-        return {"success": False, "error": "Classifier not available"}
+    from dataset.core import save_json
 
     save_json(_state_file, _state)
-    save_text_dumps(_state)
+    classifier.save_text_dumps(_state)
     return {"success": True}
 
 
 @router.get("/images")
 async def get_images(page: int = 0):
     """Get paginated images."""
-    if not CLASSIFIER_AVAILABLE or _fltr_df is None:
-        return MainResponse(
-            images=[], total_pages=0, current_page=0, selected_images={}, statuses=[]
-        )
+    from dataset.core import save_json
 
     start_idx = page * PAGE_SIZE
     end_idx = start_idx + PAGE_SIZE
@@ -131,7 +115,7 @@ async def get_images(page: int = 0):
     page_data = _fltr_df.iloc[start_idx:end_idx].reset_index().to_dict("records")
     total_pages = (len(_fltr_df) + PAGE_SIZE - 1) // PAGE_SIZE
 
-    if SAVE_LAST_PAGE_ON_PAGE_CHANGE and _state_file:
+    if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
         _state["settings"]["lastPage"] = page
         save_json(_state_file, _state)
 
@@ -147,12 +131,9 @@ async def get_images(page: int = 0):
 @router.get("/groups")
 async def get_groups(page: int = 0):
     """Get images grouped by cluster."""
-    global _prev_groups_cluster_col, _clusters, _groups_idx2cluster
+    from dataset.core import save_json
 
-    if not CLASSIFIER_AVAILABLE or _fltr_df is None:
-        return MainResponse(
-            images=[], total_pages=0, current_page=0, selected_images={}, statuses=[]
-        )
+    global _prev_groups_cluster_col, _clusters, _groups_idx2cluster
 
     if _cluster_col != _prev_groups_cluster_col:
         _prev_groups_cluster_col = _cluster_col
@@ -175,7 +156,7 @@ async def get_groups(page: int = 0):
     )
     total_pages = len(_clusters)
 
-    if SAVE_LAST_PAGE_ON_PAGE_CHANGE and _state_file:
+    if SAVE_LAST_PAGE_ON_PAGE_CHANGE:
         _state["settings"]["lastPage"] = page
         save_json(_state_file, _state)
 
@@ -191,9 +172,6 @@ async def get_groups(page: int = 0):
 @router.get("/images/selected")
 async def get_selected_images():
     """Get all selected/classified images."""
-    if not CLASSIFIER_AVAILABLE:
-        return {"images": [], "selected_images": {}}
-
     images = [
         (
             _clf_dict.get(k)
@@ -212,13 +190,14 @@ async def get_selected_images():
 @router.post("/images/update")
 async def update_image(update: ImageUpdate):
     """Update image classification status."""
+    from dataset.core import save_json
+
     if update.status and update.path:
         _state.setdefault("selected_images", {})[update.path] = update.status
     elif not update.status and update.path in _state.get("selected_images", {}):
         _state["selected_images"].pop(update.path)
 
-    if _state_file:
-        save_json(_state_file, _state)
+    save_json(_state_file, _state)
 
     return {"success": True}
 
@@ -227,7 +206,7 @@ async def update_image(update: ImageUpdate):
 async def get_image_file(image_path: str):
     """Serve an image file."""
     if not image_path:
-        return FileResponse(_default_image or get_default_image_path())
+        return FileResponse(_default_image)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail=f"Image not found: {image_path}")

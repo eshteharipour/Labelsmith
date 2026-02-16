@@ -12,18 +12,13 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from utils import get_default_image_path, load_json, save_json
+
+from dataset import matcher
+from dataset.settings import LCSCIseeCLip, LIPDataset, get_default_image, save_csv
 
 load_dotenv()
 
-# Only import if the module exists
-try:
-    from prod2vec.dataset.isee_matcher import DatasetEnum, read_dataset, save_dataset
-
-    MATCHER_AVAILABLE = True
-except ImportError:
-    MATCHER_AVAILABLE = False
-    print("Warning: prod2vec.dataset.isee_matcher not available")
+MATCHER_AVAILABLE = True
 
 router = APIRouter()
 
@@ -44,15 +39,7 @@ _result_df = None
 
 def init_matcher():
     """Initialize the matcher by loading datasets."""
-    global _df, _state, _default_image, _result_df
-
-    if not MATCHER_AVAILABLE:
-        print("Matcher module not available - using dummy data")
-        _df = pd.DataFrame(columns=COLUMNS)
-        _state = load_json(_state_file, {"settings": {}})
-        _default_image = get_default_image_path()
-        _result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
-        return
+    global _df, _state, _default_image, _result_df, _state_file
 
     print("Loading matcher dataset...")
     dataset_name = os.getenv("dataset", "").lower().strip()
@@ -60,24 +47,19 @@ def init_matcher():
     show_matchings = os.getenv("show_matchings", "")
 
     try:
-        dataset = DatasetEnum(dataset_name)
-        _df, _state, state_file_path, _default_image = read_dataset(
+        dataset = matcher.DatasetEnum(dataset_name)
+        _df, _state, _state_file, _default_image = matcher.read_dataset(
             dataset, show_reviewed, show_matchings
         )
-        _state_file = state_file_path
         _result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
         print(f"Loaded {len(_df)} matching pairs")
     except Exception as e:
         print(f"Error loading matcher dataset: {e}")
-        _df = pd.DataFrame(columns=COLUMNS)
-        _state = load_json(_state_file, {"settings": {}})
-        _default_image = get_default_image_path()
-        _result_df = pd.DataFrame(columns=COLUMNS, dtype=object)
+        raise
 
 
-# Initialize on module load if this router is used
-if MATCHER_AVAILABLE:
-    init_matcher()
+# Initialize on module load
+init_matcher()
 
 
 class MatchUpdate(BaseModel):
@@ -100,6 +82,8 @@ async def load_settings():
 @router.post("/save_settings")
 async def save_settings(request: Request):
     """Save user settings to state."""
+    from dataset.core import save_json
+
     data = await request.json()
     _state["settings"] = data
     save_json(_state_file, _state)
@@ -109,11 +93,8 @@ async def save_settings(request: Request):
 @router.post("/sync_changes")
 async def sync_changes():
     """Save accumulated changes to file."""
-    if not MATCHER_AVAILABLE or _result_df is None:
-        return {"success": False, "error": "Matcher not available"}
-
     try:
-        save_dataset(_result_df)
+        matcher.save_dataset(_result_df)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -122,9 +103,6 @@ async def sync_changes():
 @router.post("/sync_page")
 async def sync_page(request: Request):
     """Save current page to file."""
-    if not MATCHER_AVAILABLE or _df is None:
-        return {"success": False, "error": "Matcher not available"}
-
     data = await request.json()
     page = int(data["page"])
     start_idx = page * PAGE_SIZE
@@ -133,7 +111,7 @@ async def sync_page(request: Request):
     page_data = _df.iloc[start_idx:end_idx].reset_index()
 
     try:
-        save_dataset(page_data)
+        matcher.save_dataset(page_data)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -142,11 +120,8 @@ async def sync_page(request: Request):
 @router.post("/sync_all")
 async def sync_all():
     """Save all data to file."""
-    if not MATCHER_AVAILABLE or _df is None:
-        return {"success": False, "error": "Matcher not available"}
-
     try:
-        save_dataset(_df)
+        matcher.save_dataset(_df)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -155,12 +130,7 @@ async def sync_all():
 @router.get("/images")
 async def get_images(page: int = 0):
     """Get paginated matching pairs."""
-    if not MATCHER_AVAILABLE or _df is None:
-        return {
-            "images": [],
-            "total_pages": 0,
-            "current_page": 0,
-        }
+    from dataset.core import save_json
 
     start_idx = page * PAGE_SIZE
     end_idx = start_idx + PAGE_SIZE
@@ -183,9 +153,6 @@ async def get_images(page: int = 0):
 async def update_match(update: MatchUpdate):
     """Update a matching pair."""
     global _result_df
-
-    if not MATCHER_AVAILABLE or _df is None:
-        return {"success": False, "error": "Matcher not available"}
 
     # Add to result dataframe
     data = pd.DataFrame(
@@ -224,7 +191,7 @@ async def update_match(update: MatchUpdate):
 async def get_image_file(image_path: str):
     """Serve an image file."""
     if not image_path:
-        return FileResponse(_default_image or get_default_image_path())
+        return FileResponse(_default_image)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail=f"Image not found: {image_path}")
