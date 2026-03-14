@@ -11,23 +11,20 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse
+from prod2vec.dataset.schemas.schema_core import (
+    CrawlerProducts,
+    ReferenceProducts,
+    Site,
+)
 from pydantic import BaseModel
+from sqlalchemy import create_engine, update
+from sqlalchemy.orm import Session, aliased, sessionmaker
+from sqlalchemy.sql import func
+
 from utils import get_default_image_path, load_json, save_json
 
 load_dotenv()
 
-# Only import if the module exists
-try:
-    from sqlalchemy import create_engine, update
-    from sqlalchemy.orm import Session, aliased, sessionmaker
-    from sqlalchemy.sql import func
-
-    from schema_core import CrawlerProducts, ReferenceProducts, Site
-
-    SHOP_AVAILABLE = True
-except ImportError:
-    SHOP_AVAILABLE = False
-    print("Warning: Database modules not available for shop handler")
 
 router = APIRouter()
 
@@ -49,9 +46,6 @@ _state: Dict[str, Any] = {"settings": {}}
 
 def create_session(dbname: str, autocommit=False):
     """Create a database session."""
-    if not SHOP_AVAILABLE:
-        return None
-
     if dbname == "isee":
         db_url = os.environ.get("DB_URL_ISEE")
     elif dbname == "core":
@@ -69,9 +63,6 @@ def create_session(dbname: str, autocommit=False):
 
 def get_all_crawler_products(db: Session, show_reviewed=False, only_enabled=True):
     """Retrieve crawler products with reference product recommendations."""
-    if not SHOP_AVAILABLE:
-        return []
-
     ReferenceProducts2 = aliased(ReferenceProducts, name="ref_products2")
 
     query = db.query(
@@ -107,9 +98,6 @@ def get_all_crawler_products(db: Session, show_reviewed=False, only_enabled=True
 
 def update_groups_single(db: Session, id_: int, ref_pid: int) -> bool:
     """Update a single crawler product's reference PID."""
-    if not SHOP_AVAILABLE:
-        return False
-
     try:
         stmt = (
             update(CrawlerProducts)
@@ -135,12 +123,6 @@ def init_shop():
     """Initialize the shop handler by loading data."""
     global _session, _data, _state
 
-    if not SHOP_AVAILABLE:
-        print("Shop module not available - using dummy data")
-        _state = load_json(STATE_FILE, {"settings": {}})
-        _data = []
-        return
-
     print("Loading shop database...")
     _session = create_session("core")
     if _session:
@@ -150,8 +132,7 @@ def init_shop():
 
 
 # Initialize on module load if this router is used
-if SHOP_AVAILABLE:
-    init_shop()
+init_shop()
 
 
 class CPUpdate(BaseModel):
@@ -199,7 +180,7 @@ async def get_images(page: int = 0):
 @router.post("/images/update")
 async def update_product(update: CPUpdate):
     """Update a crawler product's reference PID."""
-    if not SHOP_AVAILABLE or not _session:
+    if not _session:
         return {"success": False, "error": "Shop not available"}
 
     result = update_groups_single(_session, update.id, update.ref_pid)
