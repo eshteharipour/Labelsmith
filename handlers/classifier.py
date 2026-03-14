@@ -14,8 +14,6 @@ from pydantic import BaseModel
 from dataset import classifier
 from dataset.settings import LCSCIseeCLip, LIPDataset, get_default_image
 
-CLASSIFIER_AVAILABLE = True
-
 router = APIRouter()
 
 # Configuration

@@ -18,7 +18,6 @@ from dataset.settings import LCSCIseeCLip, LIPDataset, get_default_image, save_c
 
 load_dotenv()
 
-MATCHER_AVAILABLE = True
 
 router = APIRouter()
 
